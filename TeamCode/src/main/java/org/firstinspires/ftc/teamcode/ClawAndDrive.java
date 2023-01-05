@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="Omni Linear OpMode", group="Linear Opmode")
+@TeleOp(name="Omni Linear OpMode with Claw", group="Linear Opmode")
 //@Disabled
 public class ClawAndDrive extends LinearOpMode {
 
