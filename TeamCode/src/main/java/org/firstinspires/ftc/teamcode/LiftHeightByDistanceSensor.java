@@ -32,8 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -53,8 +51,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  *
  * @see <a href="http://revrobotics.com">REV Robotics Web Page</a>
  */
-@TeleOp(name = "Sensor: REV2mDistance", group = "Sensor")
-@Disabled
+@TeleOp(name = "Lift Heights via Distance Sensor", group = "Sensor")
 public class LiftHeightByDistanceSensor extends LinearOpMode {
 
     private DistanceSensor sensorRange;
@@ -73,13 +70,10 @@ public class LiftHeightByDistanceSensor extends LinearOpMode {
     private final double MED_HEIGHT = 20.0;
     private final double HIGH_HEIGHT = 30.0;
 
-    private double liftHeight;
-
     @Override
     public void runOpMode() {
         // you can use this as a regular DistanceSensor.
         sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
-        liftHeight = sensorRange.getDistance(DistanceUnit.CM);
 
         liftMotor1  = hardwareMap.get(DcMotor.class, "LiftMotor1");
         liftMotor2 = hardwareMap.get(DcMotor.class, "LiftMotor2");
