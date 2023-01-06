@@ -36,8 +36,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 
+import org.firstinspires.ftc.robotcontroller.external.samples.SensorDigitalTouch;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 /**
@@ -58,6 +60,8 @@ public class LiftHeightByDistanceSensor extends LinearOpMode {
 
     private DcMotor liftMotor1 = null;
     private DcMotor liftMotor2 = null;
+
+    //private DigitalChannel touchSensor = null;
 
     private final double MAX_POWER = 0.75;
     private final double LIFT_POWER_INCREMENT = 0.05;
@@ -80,8 +84,8 @@ public class LiftHeightByDistanceSensor extends LinearOpMode {
 
         // Motor directions should be such that positive power moves lift upwards
         // and negative power moves lift downwards.
-        liftMotor1.setDirection(DcMotor.Direction.FORWARD);
-        liftMotor2.setDirection(DcMotor.Direction.FORWARD);
+        liftMotor1.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor2.setDirection(DcMotor.Direction.REVERSE);
 
         telemetry.addData(">>", "Press start to continue");
         telemetry.update();
@@ -126,6 +130,8 @@ public class LiftHeightByDistanceSensor extends LinearOpMode {
             liftPower = RampDownLiftPower(liftPower);
             dualLift(liftPower);
         }
+        liftPower = 0.0;
+        dualLift(liftPower);
     }
 
     public double RampUpLiftPower(double liftPower) {
