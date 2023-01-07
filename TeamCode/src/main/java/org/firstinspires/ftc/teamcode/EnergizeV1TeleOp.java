@@ -1,10 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -14,6 +12,7 @@ public class EnergizeV1TeleOp extends LinearOpMode {
 
     // Declares OpMode members for needed motors.
     private ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime modeSwitchingDelay = new ElapsedTime();
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
@@ -29,6 +28,8 @@ public class EnergizeV1TeleOp extends LinearOpMode {
     Servo rightServo;
     Servo leftServo;
     double servoPosition = 0.0;
+
+    boolean toggle = false;
 
     @Override
     public void runOpMode() {
@@ -61,6 +62,8 @@ public class EnergizeV1TeleOp extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+        modeSwitchingDelay.reset();
+
         waitForStart();
         runtime.reset();
 
@@ -73,12 +76,17 @@ public class EnergizeV1TeleOp extends LinearOpMode {
             double lateral = gamepad1.left_stick_x;
             double yaw = gamepad1.right_stick_x;
 
-            // Combines the joystick requests for each axis-motion to determine each wheel's power.
-            // Set up a variable for each drive wheel to save the power level for telemetry.
-            double leftFrontPower = axial + lateral + yaw;
-            double rightFrontPower = axial - lateral - yaw;
-            double leftBackPower = axial - lateral + yaw;
-            double rightBackPower = axial + lateral - yaw;
+            double leftFrontPower = 0;
+            double rightFrontPower = 0;
+            double leftBackPower = 0;
+            double rightBackPower = 0;
+
+            if (Math.abs(axial) > 0.05 || Math.abs(lateral) > 0.05 || Math.abs(yaw) > 0.05) {
+                leftFrontPower =  axial + lateral + yaw;
+                rightFrontPower = axial - lateral - yaw;
+                leftBackPower = axial - lateral + yaw;
+                rightBackPower = axial + lateral - yaw;
+            }
 
             // Normalizes the values so no wheel power exceeds 100%.
             max = Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower));
@@ -92,6 +100,46 @@ public class EnergizeV1TeleOp extends LinearOpMode {
                 rightBackPower /= max;
             }
 
+            if (gamepad1.x && modeSwitchingDelay.time() > 0.75) {
+                toggle = !toggle;
+                modeSwitchingDelay.reset();
+            }
+
+//            if (gamepad1.x && toggle && modeSwitchingDelay.time() > 0.75) {
+//                toggle = false;
+//                // sleep(500);
+//                modeSwitchingDelay.reset();
+//            }
+//            else if(gamepad1.x && !toggle && modeSwitchingDelay.time() > 0.75) {
+//                toggle = true;
+//                //sleep(500);
+//                modeSwitchingDelay.reset();
+//            }
+
+            if (toggle) {
+                leftFrontDrive.setPower(leftFrontPower / 2);
+                rightFrontDrive.setPower(rightFrontPower / 2);
+                leftBackDrive.setPower(leftBackPower / 2);
+                rightBackDrive.setPower(rightBackPower / 2);
+            } else {
+                leftFrontDrive.setPower(leftFrontPower);
+                rightFrontDrive.setPower(rightFrontPower);
+                leftBackDrive.setPower(leftBackPower);
+                rightBackDrive.setPower(rightBackPower);
+            }
+
+//            if (toggle) {
+//                leftFrontDrive.setPower(leftFrontPower / 2);
+//                rightFrontDrive.setPower(rightFrontPower / 2);
+//                leftBackDrive.setPower(leftBackPower / 2);
+//                rightBackDrive.setPower(rightBackPower / 2);
+//            } else if (!toggle) {
+//                leftFrontDrive.setPower(leftFrontPower);
+//                rightFrontDrive.setPower(rightFrontPower);
+//                leftBackDrive.setPower(leftBackPower);
+//                rightBackDrive.setPower(rightBackPower);
+//
+//            }
             // Opens claw.
             if (gamepad2.right_bumper) {
                 rightServo.setPosition(1.0);
@@ -127,10 +175,10 @@ public class EnergizeV1TeleOp extends LinearOpMode {
             }
 
             // Sends calculated power to motors.
-            leftFrontDrive.setPower(leftFrontPower);
-            rightFrontDrive.setPower(rightFrontPower);
-            leftBackDrive.setPower(leftBackPower);
-            rightBackDrive.setPower(rightBackPower);
+            //leftFrontDrive.setPower(leftFrontPower);
+            //rightFrontDrive.setPower(rightFrontPower);
+            //leftBackDrive.setPower(leftBackPower);
+            //rightBackDrive.setPower(rightBackPower);
             dualLift(liftPower);
 
             // Shows the elapsed game time and wheel power.
@@ -139,6 +187,7 @@ public class EnergizeV1TeleOp extends LinearOpMode {
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Lift Motors", "%5.2f", liftPower);
+            telemetry.addData("precision mode",String.valueOf(toggle));
             telemetry.update();
         }
 
