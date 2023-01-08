@@ -32,15 +32,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.teamcode;
 
+import androidx.appcompat.view.StandaloneActionMode;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.SensorDigitalTouch;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+import java.util.ArrayList;
 
 /**
  * {@link LiftHeightByDistanceSensor} illustrates how to use the REV Robotics
@@ -57,22 +65,39 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class LiftHeightByDistanceSensor extends LinearOpMode {
 
     private DistanceSensor sensorRange;
+    private DigitalChannel sensorTouch;
 
     private DcMotor liftMotor1 = null;
     private DcMotor liftMotor2 = null;
 
-    //private DigitalChannel touchSensor = null;
+    private final double TRAPEZOID_START_POWER = 0.05;
+    private final double TRAPEZOID_MAX_POWER = 0.75;
+    // percentage of travel distance for ramping up to max power (trapezoid power profile)
+    private final double RAMP_UP_LENGTH = 0.25;
+    // percentage of travel distance for ramping down to stationary (trapezoid power profile)
+    private final double RAMP_DOWN_LENGTH = 0.75;
 
-    private final double MAX_POWER = 0.75;
+    private final double LINEAR_MAX_POWER = 0.75;
     private final double LIFT_POWER_INCREMENT = 0.05;
+
+    private final double TRIANGLE_START_POWER = 0.05;
+    private final double TRIANGLE_MAX_POWER = 0.5;
+
     // when moving to a target height with the lift, this is how much flexibility the lift has
     // in reaching the target height [cm]
     private final double WIGGLE_ROOM = 1.5;
-
     // target heights [cm]
     private final double LOW_HEIGHT = 10.0;
     private final double MED_HEIGHT = 20.0;
     private final double HIGH_HEIGHT = 30.0;
+    private final double MAX_HEIGHT = 50.0;
+
+
+    enum MotionProfile {
+        LINEAR,
+        TRAPEZOIDAL,
+        TRIANGULAR
+    }
 
     @Override
     public void runOpMode() {
@@ -87,6 +112,9 @@ public class LiftHeightByDistanceSensor extends LinearOpMode {
         liftMotor1.setDirection(DcMotor.Direction.REVERSE);
         liftMotor2.setDirection(DcMotor.Direction.REVERSE);
 
+        sensorTouch = hardwareMap.get(DigitalChannel.class, "sensor_touch");
+        sensorTouch.setMode(DigitalChannel.Mode.INPUT);
+
         telemetry.addData(">>", "Press start to continue");
         telemetry.update();
 
@@ -95,15 +123,15 @@ public class LiftHeightByDistanceSensor extends LinearOpMode {
 
             if (gamepad2.y)
             {
-                MoveLift(HIGH_HEIGHT);
+                MoveLift(MotionProfile.TRAPEZOIDAL, HIGH_HEIGHT);
             }
             else if (gamepad2.x)
             {
-                MoveLift(MED_HEIGHT);
+                MoveLift(MotionProfile.TRAPEZOIDAL, MED_HEIGHT);
             }
             else if (gamepad2.b)
             {
-                MoveLift(LOW_HEIGHT);
+                MoveLift(MotionProfile.TRAPEZOIDAL, LOW_HEIGHT);
             }
 
             // generic DistanceSensor methods.
@@ -115,46 +143,103 @@ public class LiftHeightByDistanceSensor extends LinearOpMode {
     }
 
 
-    public void MoveLift(double targetHeight) {
+    public void MoveLift(MotionProfile motorMotionProfile, double targetHeight) {
 
+        double startingHeight = sensorRange.getDistance(DistanceUnit.CM);
+        double travelDistance = Math.abs(startingHeight - targetHeight);
+        double currentHeight = startingHeight;
+        double travelDirection = Math.signum(startingHeight - targetHeight);
         double liftPower = 0.0;
-        while (sensorRange.getDistance(DistanceUnit.CM) < targetHeight - WIGGLE_ROOM)
+        double distanceTraveled, percentage;
+
+        while (currentHeight < targetHeight - WIGGLE_ROOM || currentHeight > targetHeight + WIGGLE_ROOM)
         {
-            liftPower = RampUpLiftPower(liftPower);
+            distanceTraveled = Math.abs(currentHeight - startingHeight);
+            percentage = distanceTraveled / travelDistance;
+
+            switch (motorMotionProfile) {
+                case LINEAR:
+                    liftPower = travelDirection * LinearPowerProfile(liftPower);
+                    break;
+                case TRAPEZOIDAL:
+                    liftPower = travelDirection * TrapezoidalPowerProfile(percentage);
+                    break;
+                case TRIANGULAR:
+                    liftPower = travelDirection * TriangularPowerProfile(percentage);
+                    break;
+            }
             dualLift(liftPower);
-        }
-        liftPower = 0.0;
-        dualLift(liftPower);
-        while (sensorRange.getDistance(DistanceUnit.CM) > targetHeight + WIGGLE_ROOM)
-        {
-            liftPower = RampDownLiftPower(liftPower);
-            dualLift(liftPower);
+
+            if (NeedToStop())
+            {
+                break;
+            }
+
+            currentHeight = sensorRange.getDistance(DistanceUnit.CM);
         }
         liftPower = 0.0;
         dualLift(liftPower);
     }
 
-    public double RampUpLiftPower(double liftPower) {
+    // Use for 'long distance' travel
+    public double TrapezoidalPowerProfile(double progress) {
 
-        if (liftPower < MAX_POWER)
+        double outputPower = 0.0;
+        if (progress < RAMP_UP_LENGTH)
         {
-            return liftPower + LIFT_POWER_INCREMENT;
+            double b = TRAPEZOID_START_POWER;
+            double m = 4.0 * (TRAPEZOID_MAX_POWER - TRAPEZOID_START_POWER);
+            outputPower = m * progress + b;
+        } else if (progress > RAMP_DOWN_LENGTH)
+        {
+            double b = 4.0 * TRAPEZOID_MAX_POWER - 3.0 * TRAPEZOID_START_POWER;
+            double m = 4.0 * (TRAPEZOID_START_POWER - TRAPEZOID_MAX_POWER);
+            outputPower = m * progress + b;
+        } else
+        {
+            outputPower = TRAPEZOID_MAX_POWER;
         }
-        return liftPower;
+
+        return outputPower;
     }
 
-    public double RampDownLiftPower(double liftPower) {
+    public double LinearPowerProfile(double currentPower) {
 
-        if (liftPower > - MAX_POWER)
+        double outputPower = Math.abs(currentPower);
+        if (outputPower < LINEAR_MAX_POWER)
         {
-            return liftPower - LIFT_POWER_INCREMENT;
+            outputPower += LIFT_POWER_INCREMENT;
         }
-        return liftPower;
+        return outputPower;
+    }
+
+    // Use for 'short distance' travel
+    public double TriangularPowerProfile(double progress) {
+
+        double outputPower, b, m;
+
+        if (progress < 0.5)
+        {
+            b = TRIANGLE_START_POWER;
+            m = 2.0 * (TRIANGLE_MAX_POWER - TRIANGLE_START_POWER);
+        } else
+        {
+            b = 2.0 * TRIANGLE_MAX_POWER - TRIANGLE_START_POWER;
+            m = 2.0 * (TRIANGLE_START_POWER - TRIANGLE_MAX_POWER);
+        }
+
+        outputPower = m * progress + b;
+        return outputPower;
     }
 
     public void dualLift(double power) {
 
         liftMotor1.setPower(power);
         liftMotor2.setPower(power);
+    }
+
+    public boolean NeedToStop () {
+
+        return !sensorTouch.getState() || sensorRange.getDistance(DistanceUnit.CM) >= MAX_HEIGHT;
     }
 }
