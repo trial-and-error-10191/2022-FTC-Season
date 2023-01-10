@@ -38,7 +38,7 @@ public class Lift {
     public void MoveLift(double targetHeight) {
 
         double startingHeight = sensorRange.getDistance(DistanceUnit.CM);
-        double travelDistance = Math.abs(startingHeight - targetHeight);
+        double travelDistance = Math.abs(targetHeight - startingHeight);
         double currentHeight = startingHeight;
         double travelDirection = Math.signum(startingHeight - targetHeight);
         double liftPower = 0.0;
