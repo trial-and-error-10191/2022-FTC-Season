@@ -228,14 +228,18 @@ public class EnergizeV2Auto_MultiThreaded extends LinearOpMode {
         gripper.Open();
         lift.MoveLift(0.0);
 
-        /* Actually do something useful */
-        if (tagOfInterest.id == 1) {
+        if (tagOfInterest != null) {
+            if (tagOfInterest.id == 1) {
 
-            drivetrain.strafeHalfBlock("forward", fast);
-        } else if (tagOfInterest.id == 3) {
+                drivetrain.strafeHalfBlock("forward", fast);
+            } else if (tagOfInterest.id == 3) {
 
-            drivetrain.strafeHalfBlock("backward", medium);
-        } else { // Either we saw the third tag or we saw no tags and we're gambling on 1/3 odds to randomly park correctly
+                drivetrain.strafeHalfBlock("backward", medium);
+            } else if (tagOfInterest.id == 9) {
+
+                drivetrain.moveHalfBlock("backward", slow);
+            }
+        } else { // if no tag was sighted, take a guess on which spot to park in
 
             drivetrain.moveHalfBlock("backward", slow);
         }
