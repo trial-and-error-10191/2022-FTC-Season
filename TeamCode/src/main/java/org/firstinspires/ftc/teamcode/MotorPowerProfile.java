@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 public class MotorPowerProfile {
 
     private final double TRAPEZOID_START_POWER = 0.05;
@@ -34,7 +36,7 @@ public class MotorPowerProfile {
         }
     }
 
-    public double getPower(double currentPower, double percentage) {
+    public double getPower(double currentPower, double percentage, ElapsedTime rampUpTime) {
 
         double power = 0.0;
         switch (profile) {
@@ -42,7 +44,7 @@ public class MotorPowerProfile {
                 power = LinearPowerProfile(currentPower);
                 break;
             case TRAPEZOIDAL:
-                power = TrapezoidalPowerProfile(percentage);
+                power = TrapezoidalPowerProfile(percentage, rampUpTime);
                 break;
             case TRIANGULAR:
                 power = TriangularPowerProfile(percentage);
@@ -80,14 +82,12 @@ public class MotorPowerProfile {
     }
 
     // Use for 'long distance' travel
-    private double TrapezoidalPowerProfile(double progress) {
+    private double TrapezoidalPowerProfile(double progress, ElapsedTime rampUpTime) {
 
         double outputPower = 0.0;
-        if (progress < RAMP_UP_LENGTH)
+        if (rampUpTime.time() < 1.0)
         {
-            double b = TRAPEZOID_START_POWER;
-            double m = 4.0 * (TRAPEZOID_MAX_POWER - TRAPEZOID_START_POWER);
-            outputPower = m * progress + b;
+            outputPower = rampUpTime.time() * TRAPEZOID_MAX_POWER;
         } else if (progress > RAMP_DOWN_LENGTH)
         {
             double b = 4.0 * TRAPEZOID_MAX_POWER - 3.0 * TRAPEZOID_START_POWER;

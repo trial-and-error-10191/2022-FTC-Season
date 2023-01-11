@@ -64,6 +64,7 @@ import java.util.ArrayList;
 @TeleOp(name = "Lift Heights via Distance Sensor", group = "Sensor")
 public class LiftHeightByDistanceSensor extends LinearOpMode {
 
+    private final ElapsedTime motorRampUpTime = new ElapsedTime();
     private DistanceSensor sensorRange;
     private DigitalChannel sensorTouch;
 
@@ -151,6 +152,7 @@ public class LiftHeightByDistanceSensor extends LinearOpMode {
         double travelDirection = Math.signum(startingHeight - targetHeight);
         double liftPower = 0.0;
         double distanceTraveled, percentage;
+        motorRampUpTime.reset();
 
         while (currentHeight < targetHeight - WIGGLE_ROOM || currentHeight > targetHeight + WIGGLE_ROOM)
         {
@@ -185,11 +187,9 @@ public class LiftHeightByDistanceSensor extends LinearOpMode {
     public double TrapezoidalPowerProfile(double progress) {
 
         double outputPower = 0.0;
-        if (progress < RAMP_UP_LENGTH)
+        if (motorRampUpTime.time() < 1.0)
         {
-            double b = TRAPEZOID_START_POWER;
-            double m = 4.0 * (TRAPEZOID_MAX_POWER - TRAPEZOID_START_POWER);
-            outputPower = m * progress + b;
+            outputPower = motorRampUpTime.time() * TRAPEZOID_MAX_POWER;
         } else if (progress > RAMP_DOWN_LENGTH)
         {
             double b = 4.0 * TRAPEZOID_MAX_POWER - 3.0 * TRAPEZOID_START_POWER;

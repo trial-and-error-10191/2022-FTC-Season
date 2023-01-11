@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
@@ -18,6 +19,8 @@ public class Lift {
     private final DigitalChannel sensorTouch;
 
     private final MotorPowerProfile powerProfile;
+
+    private final ElapsedTime motorRampUpTime = new ElapsedTime();
 
     // when moving to a target height with the lift, this is how much flexibility the lift has
     // in reaching the target height [cm]
@@ -43,13 +46,14 @@ public class Lift {
         double travelDirection = Math.signum(startingHeight - targetHeight);
         double liftPower = 0.0;
         double distanceTraveled, percentage;
+        motorRampUpTime.reset();
 
         while (currentHeight < targetHeight - WIGGLE_ROOM || currentHeight > targetHeight + WIGGLE_ROOM)
         {
             distanceTraveled = Math.abs(currentHeight - startingHeight);
             percentage = distanceTraveled / travelDistance;
 
-            liftPower = travelDirection * powerProfile.getPower(liftPower, percentage);
+            liftPower = travelDirection * powerProfile.getPower(liftPower, percentage, motorRampUpTime);
             dualLift(liftPower);
 
             if (NeedToStop())
