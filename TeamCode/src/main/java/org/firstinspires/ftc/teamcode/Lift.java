@@ -29,6 +29,8 @@ public class Lift {
     // Lift should go no higher than this height to prevent structural damage
     private final double MAX_HEIGHT = 50.0;
 
+    private boolean GoingUp;
+
     public Lift(DcMotor motor1, DcMotor motor2, DistanceSensor range, DigitalChannel touch, int profileChoice) {
 
         liftMotor1 = motor1;
@@ -46,6 +48,7 @@ public class Lift {
         double travelDirection = Math.signum(startingHeight - targetHeight);
         double liftPower = 0.0;
         double distanceTraveled, percentage;
+        GoingUp = (targetHeight > startingHeight);
         motorRampUpTime.reset();
 
         while (currentHeight < targetHeight - WIGGLE_ROOM || currentHeight > targetHeight + WIGGLE_ROOM)
@@ -75,7 +78,10 @@ public class Lift {
 
     private boolean NeedToStop () {
 
-        return !sensorTouch.getState() || sensorRange.getDistance(DistanceUnit.CM) >= MAX_HEIGHT;
+        // Stop if lift is going down and button is pressed
+        // or if lift is going up and higher than the max height
+        return (!GoingUp && !sensorTouch.getState()) ||
+                (GoingUp && sensorRange.getDistance(DistanceUnit.CM) >= MAX_HEIGHT);
     }
 }
 
