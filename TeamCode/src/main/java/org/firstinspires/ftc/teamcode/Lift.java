@@ -45,7 +45,7 @@ public class Lift {
         double startingHeight = sensorRange.getDistance(DistanceUnit.CM);
         double travelDistance = Math.abs(targetHeight - startingHeight);
         double currentHeight = startingHeight;
-        double travelDirection = Math.signum(startingHeight - targetHeight);
+        double travelDirection = Math.signum(targetHeight - startingHeight);
         double liftPower = 0.0;
         double distanceTraveled, percentage;
         GoingUp = (targetHeight > startingHeight);
