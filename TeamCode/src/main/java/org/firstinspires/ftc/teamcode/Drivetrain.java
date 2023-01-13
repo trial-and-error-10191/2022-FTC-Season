@@ -62,12 +62,12 @@ public class Drivetrain {
                 leftBackMotor.isBusy() && rightBackMotor.isBusy()) {
 
             // Display info for the driver:
-            telemetry.addLine("Move Forward");
-            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
-            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
-                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
-                    rightBackMotor.getCurrentPosition());
-            telemetry.update();
+//            telemetry.addLine("Move Forward");
+//            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
+//            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
+//                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
+//                    rightBackMotor.getCurrentPosition());
+//            telemetry.update();
         }
 
         // Stop all motion:
@@ -122,12 +122,12 @@ public class Drivetrain {
                 leftBackMotor.isBusy() && rightBackMotor.isBusy()) {
 
             // Display info for the driver:
-            telemetry.addLine("Move Forward");
-            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
-            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
-                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
-                    rightBackMotor.getCurrentPosition());
-            telemetry.update();
+//            telemetry.addLine("Move Forward");
+//            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
+//            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
+//                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
+//                    rightBackMotor.getCurrentPosition());
+//            telemetry.update();
         }
 
 
@@ -183,12 +183,12 @@ public class Drivetrain {
                 leftBackMotor.isBusy() && rightBackMotor.isBusy()) {
 
             // Display info for the driver:
-            telemetry.addLine("Move Forward");
-            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
-            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
-                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
-                    rightBackMotor.getCurrentPosition());
-            telemetry.update();
+//            telemetry.addLine("Move Forward");
+//            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
+//            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
+//                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
+//                    rightBackMotor.getCurrentPosition());
+//            telemetry.update();
         }
 
         // Stop all motion:
@@ -235,12 +235,12 @@ public class Drivetrain {
                 leftBackMotor.isBusy() && rightBackMotor.isBusy()) {
 
             // Display info for the driver:
-            telemetry.addLine("Move Forward");
-            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
-            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
-                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
-                    rightBackMotor.getCurrentPosition());
-            telemetry.update();
+//            telemetry.addLine("Move Forward");
+//            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
+//            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
+//                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
+//                    rightBackMotor.getCurrentPosition());
+//            telemetry.update();
         }
 
         // Stop all motion:
@@ -295,12 +295,12 @@ public class Drivetrain {
                 leftBackMotor.isBusy() && rightBackMotor.isBusy()) {
 
             // Display info for the driver:
-            telemetry.addLine("Move Forward");
-            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
-            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
-                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
-                    rightBackMotor.getCurrentPosition());
-            telemetry.update();
+//            telemetry.addLine("Move Forward");
+//            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
+//            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
+//                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
+//                    rightBackMotor.getCurrentPosition());
+//            telemetry.update();
         }
 
 
@@ -356,12 +356,12 @@ public class Drivetrain {
                 leftBackMotor.isBusy() && rightBackMotor.isBusy()) {
 
             // Display info for the driver:
-            telemetry.addLine("Move Forward");
-            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
-            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
-                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
-                    rightBackMotor.getCurrentPosition());
-            telemetry.update();
+//            telemetry.addLine("Move Forward");
+//            telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
+//            telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
+//                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
+//                    rightBackMotor.getCurrentPosition());
+//            telemetry.update();
         }
 
 
@@ -402,12 +402,12 @@ public class Drivetrain {
                 leftBackMotor.isBusy() && rightBackMotor.isBusy()) {
 
             // Display it for the driver.
-            telemetry.addLine("Turn Clockwise");
-            telemetry.addData("Target", "%7d :%7d", lfPos, rfPos, lrPos, rrPos);
-            telemetry.addData("Actual", "%7d :%7d", leftFrontMotor.getCurrentPosition(),
-                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
-                    rightBackMotor.getCurrentPosition());
-            telemetry.update();
+//            telemetry.addLine("Turn Clockwise");
+//            telemetry.addData("Target", "%7d :%7d", lfPos, rfPos, lrPos, rrPos);
+//            telemetry.addData("Actual", "%7d :%7d", leftFrontMotor.getCurrentPosition(),
+//                    rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
+//                    rightBackMotor.getCurrentPosition());
+//            telemetry.update();
         }
 
         // Stop all motion:
