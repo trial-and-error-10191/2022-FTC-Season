@@ -73,6 +73,7 @@ public class IMUAndEncoder extends LinearOpMode {
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.calibrationDataFile = "BNO055IMU";
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
 

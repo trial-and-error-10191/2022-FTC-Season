@@ -14,6 +14,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 //@Disabled
 public class EnergizeV2TeleOp_UPDATED extends LinearOpMode {
 
+    // co-authored by jake
+
     // Declares OpMode members for needed motors.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftFrontDrive = null;
