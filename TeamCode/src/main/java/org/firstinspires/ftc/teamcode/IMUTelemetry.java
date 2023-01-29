@@ -32,6 +32,13 @@ public class IMUTelemetry extends LinearOpMode
 
         // Loop and update the dashboard
         while (!isStopRequested()) {
+            // Retrieve Rotational Angles and Velocities and set them to variables
+            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+            AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
+
+            double zAxis = orientation.getYaw(AngleUnit.DEGREES); // Gets yaw and sets it to zAxis variable
+            double xAxis = orientation.getPitch(AngleUnit.DEGREES); // Gets pitch and sets it to xAxis variable
+            double yAxis = orientation.getRoll(AngleUnit.DEGREES); // Gets roll and sets it to yAxis variable
 
             telemetry.addData("Hub orientation", "Logo=%s   USB=%s\n ", logoDirection, usbDirection);
 
@@ -43,10 +50,7 @@ public class IMUTelemetry extends LinearOpMode
                 telemetry.addData("Yaw", "Press Y on Gamepad to reset\n");
             }
 
-            // Retrieve Rotational Angles and Velocities
-            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-            AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
-
+            // Send telemetry to Driver Station
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("Pitch (X)", "%.2f Deg.", orientation.getPitch(AngleUnit.DEGREES));
             telemetry.addData("Roll (Y)", "%.2f Deg.\n", orientation.getRoll(AngleUnit.DEGREES));
