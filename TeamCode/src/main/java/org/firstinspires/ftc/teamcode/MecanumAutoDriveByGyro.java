@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -89,7 +88,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  *  Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Robot: Auto Drive By Gyro", group="Robot")
+@Autonomous(name="Mecanum Auto Drive", group="Robot")
 //@Disabled
 public class MecanumAutoDriveByGyro extends LinearOpMode {
 
@@ -111,6 +110,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
     private double  targetHeading = 0;
     private double  driveSpeed    = 0;
     private double  turnSpeed     = 0;
+    private double strafeSpeed = 0;
     private double  leftFrontSpeed     = 0;
     private double  rightFrontSpeed    = 0;
     private double  leftBackSpeed     = 0;
@@ -203,7 +203,10 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         //          holdHeading() is used after turns to let the heading stabilize
         //          Add a sleep(2000) after any step to keep the telemetry data visible for review
 
-        driveStraight(DRIVE_SPEED, 200.0, 0.0);    // Drive Forward 24"
+        //driveStraight(DRIVE_SPEED, 20.0, 0.0);    // Drive Forward 24"
+        //sleep(500);
+        strafeStraight(200, DRIVE_SPEED, 0);
+        sleep(500);
         //turnToHeading(TURN_SPEED, -45.0);               // Turn  CW to -45 Degrees
         //holdHeading(TURN_SPEED, -45.0, 0.5);   // Hold -45 Deg heading for a 1/2 second
 
@@ -297,6 +300,120 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
             leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
+    }
+
+    public void strafeStraight(double maxDriveSpeed,
+                              double distance,
+                              double heading) {
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            int moveCounts = (int)(distance * COUNTS_PER_INCH);
+            leftFrontTarget = leftFrontDrive.getCurrentPosition() + moveCounts;
+            leftBackTarget = -leftBackDrive.getCurrentPosition() - moveCounts;
+            rightFrontTarget = -rightFrontDrive.getCurrentPosition() - moveCounts;
+            rightBackTarget = rightBackDrive.getCurrentPosition() + moveCounts;
+
+            // Set Target FIRST, then turn on RUN_TO_POSITION
+            leftFrontDrive.setTargetPosition(leftFrontTarget);
+            leftBackDrive.setTargetPosition(leftBackTarget);
+            rightFrontDrive.setTargetPosition(rightFrontTarget);
+            rightBackDrive.setTargetPosition(rightFrontTarget);
+
+            leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            // Set the required driving speed  (must be positive for RUN_TO_POSITION)
+            // Start driving straight, and then enter the control loop
+            maxDriveSpeed = Math.abs(maxDriveSpeed);
+            moveStrafe(maxDriveSpeed, 0);
+
+            // keep looping while we are still active, and BOTH motors are running.
+            while (opModeIsActive() &&
+                    (leftFrontDrive.isBusy() && rightBackDrive.isBusy())) {
+
+                // Determine required steering to keep on heading
+                turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
+
+                // if driving in reverse, the motor correction also needs to be reversed
+                if (distance < 0)
+                    turnSpeed *= -1.0;
+
+                // Apply the turning correction to the current driving speed.
+                moveStrafe(driveSpeed, turnSpeed);
+
+                // Display drive status for the driver.
+                sendTelemetry(true);
+            }
+
+            // Stop all motion & Turn off RUN_TO_POSITION
+            moveRobot(0, 0);
+            leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+    }
+
+
+    private void strafeStraightTest(int distance, double speed, double heading) {
+        // "howMuch" is in inches. A negative howMuch moves backward.
+
+        // Fetch Drive positions:
+        leftFrontTarget = leftFrontDrive.getCurrentPosition();
+        rightFrontTarget = rightFrontDrive.getCurrentPosition();
+        leftBackTarget = leftBackDrive.getCurrentPosition();
+        rightBackTarget = rightBackDrive.getCurrentPosition();
+
+        // Calculate new targets based on input:
+        leftFrontTarget += (int) (distance * COUNTS_PER_INCH);
+        rightFrontTarget -= (int) (distance * COUNTS_PER_INCH);
+        leftBackTarget -= (int) (distance * COUNTS_PER_INCH);
+        rightBackTarget += (int) (distance * COUNTS_PER_INCH);
+
+        // Move robot to new position:
+        leftFrontDrive.setTargetPosition(leftFrontTarget);
+        leftBackDrive.setTargetPosition(leftBackTarget);
+        rightFrontDrive.setTargetPosition(rightFrontTarget);
+        rightBackDrive.setTargetPosition(rightFrontTarget);
+
+        // Set the drive Drive run modes to prepare for move to encoder:
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        speed = Math.abs(speed);
+        leftFrontDrive.setPower(speed);
+        rightFrontDrive.setPower(speed);
+        leftBackDrive.setPower(speed);
+        rightBackDrive.setPower(speed);
+
+        // Wait for move to complete:
+        while (leftFrontDrive.isBusy() && rightFrontDrive.isBusy() &&
+                leftBackDrive.isBusy() && rightBackDrive.isBusy()) {
+            // Determine required steering to keep on heading
+            turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
+
+            // if driving in reverse, the motor correction also needs to be reversed
+            if (distance < 0)
+                turnSpeed *= -1.0;
+
+            // Apply the turning correction to the current driving speed.
+            moveStrafe(driveSpeed, turnSpeed);
+
+            // Display drive status for the driver.
+            sendTelemetry(true);
+        }
+
+        // Stop all motion:
+        leftFrontDrive.setPower(0);
+        rightFrontDrive.setPower(0);
+        leftBackDrive.setPower(0);
+        rightBackDrive.setPower(0);
     }
 
     /**
@@ -430,6 +547,65 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         rightBackDrive.setPower(rightBackSpeed);
 
     }
+
+    public void moveStrafe(double drive, double turn) {
+        driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
+        turnSpeed  = turn;      // save this value as a class member so it can be used by telemetry.
+
+        leftFrontSpeed  = drive - turn;
+        leftBackSpeed  -= drive - turn;
+        rightFrontSpeed -= drive + turn;
+        rightBackSpeed = drive + turn;
+
+        // Scale speeds down if either one exceeds +/- 1.0;
+        double max;
+        max = Math.max(Math.abs(leftFrontSpeed), Math.abs(rightFrontSpeed));
+        max = Math.max(max, Math.abs(leftBackSpeed));
+        max = Math.max(max, Math.abs(rightBackSpeed));
+
+        if (max > 1.0) {
+            leftFrontSpeed /= max;
+            rightFrontSpeed /= max;
+            leftBackSpeed /= max;
+            rightBackSpeed /= max;
+        }
+
+        leftFrontDrive.setPower(leftFrontSpeed);
+        rightFrontDrive.setPower(rightFrontSpeed);
+        leftBackDrive.setPower(leftBackSpeed);
+        rightBackDrive.setPower(rightBackSpeed);
+
+    }
+
+    public void moveStrafeTest(double strafe, double turn) {
+        strafeSpeed = strafe;     // save this value as a class member so it can be used by telemetry.
+
+        leftFrontSpeed  = strafeSpeed - turn;
+        leftBackSpeed  -= strafeSpeed - turn;
+        rightFrontSpeed -= strafeSpeed + turn;
+        rightBackSpeed = strafeSpeed + turn;
+
+        // Scale speeds down if either one exceeds +/- 1.0;
+        double max;
+        max = Math.max(Math.abs(leftFrontSpeed), Math.abs(rightFrontSpeed));
+        max = Math.max(max, Math.abs(leftBackSpeed));
+        max = Math.max(max, Math.abs(rightBackSpeed));
+
+        if (max > 1.0) {
+            leftFrontSpeed /= max;
+            rightFrontSpeed /= max;
+            leftBackSpeed /= max;
+            rightBackSpeed /= max;
+        }
+
+        leftFrontDrive.setPower(leftFrontSpeed);
+        rightFrontDrive.setPower(rightFrontSpeed);
+        leftBackDrive.setPower(leftBackSpeed);
+        rightBackDrive.setPower(rightBackSpeed);
+
+    }
+
+
 
     /**
      *  Display the various control parameters while driving
