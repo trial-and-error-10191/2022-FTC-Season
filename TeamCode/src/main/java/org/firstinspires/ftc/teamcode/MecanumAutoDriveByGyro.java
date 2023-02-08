@@ -310,17 +310,23 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         if (opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            int moveCounts = (int)(distance * COUNTS_PER_INCH);
-            leftFrontTarget = leftFrontDrive.getCurrentPosition() + moveCounts;
-            leftBackTarget = -leftBackDrive.getCurrentPosition() - moveCounts;
-            rightFrontTarget = -rightFrontDrive.getCurrentPosition() - moveCounts;
-            rightBackTarget = rightBackDrive.getCurrentPosition() + moveCounts;
+            leftFrontTarget = leftFrontDrive.getCurrentPosition();
+            rightFrontTarget = rightFrontDrive.getCurrentPosition();
+            leftBackTarget = leftBackDrive.getCurrentPosition();
+            rightBackTarget = rightBackDrive.getCurrentPosition();
+
+            // Calculate new targets based on input:
+            leftFrontTarget += (int) (distance * COUNTS_PER_INCH);
+            rightFrontTarget -= (int) (distance * COUNTS_PER_INCH);
+            leftBackTarget -= (int) (distance * COUNTS_PER_INCH);
+            rightBackTarget += (int) (distance * COUNTS_PER_INCH);
+
 
             // Set Target FIRST, then turn on RUN_TO_POSITION
             leftFrontDrive.setTargetPosition(leftFrontTarget);
             leftBackDrive.setTargetPosition(leftBackTarget);
             rightFrontDrive.setTargetPosition(rightFrontTarget);
-            rightBackDrive.setTargetPosition(rightFrontTarget);
+            rightBackDrive.setTargetPosition(rightBackTarget);
 
             leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -378,7 +384,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         leftFrontDrive.setTargetPosition(leftFrontTarget);
         leftBackDrive.setTargetPosition(leftBackTarget);
         rightFrontDrive.setTargetPosition(rightFrontTarget);
-        rightBackDrive.setTargetPosition(rightFrontTarget);
+        rightBackDrive.setTargetPosition(rightBackTarget);
 
         // Set the drive Drive run modes to prepare for move to encoder:
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
