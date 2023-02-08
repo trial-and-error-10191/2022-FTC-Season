@@ -559,8 +559,8 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         turnSpeed  = turn;      // save this value as a class member so it can be used by telemetry.
 
         leftFrontSpeed  = drive - turn;
-        leftBackSpeed  -= drive - turn;
-        rightFrontSpeed -= drive + turn;
+        leftBackSpeed  = drive - turn;
+        rightFrontSpeed = drive + turn;
         rightBackSpeed = drive + turn;
 
         // Scale speeds down if either one exceeds +/- 1.0;
