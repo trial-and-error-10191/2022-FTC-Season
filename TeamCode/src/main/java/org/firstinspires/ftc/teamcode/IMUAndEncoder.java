@@ -1,10 +1,14 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import android.graphics.Path;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -31,6 +35,7 @@ public class IMUAndEncoder extends LinearOpMode {
     private int lrPos;
     private int rrPos;
 
+    IMU.Parameters pramIMU;
 
     private double robotHeading = 0;
     private double headingOffset = 0;
@@ -41,7 +46,10 @@ public class IMUAndEncoder extends LinearOpMode {
     float targetAngle;
 
 
+    int clicks = 0;
     // Set constants:
+    private double left;
+    private double right;
     private double fast = 0.5; // Fast speed
     private double medium = 0.3; // Medium speed
     private double slow = 0.1; // Slow speed
@@ -50,17 +58,14 @@ public class IMUAndEncoder extends LinearOpMode {
 
 
     private double turnSpeed = 0;
-    private double leftFrontSpeed = 0;
-    private double rightFrontSpeed = 0;
-    private double leftBackSpeed = 0;
-    private double rightBackSpeed = 0;
-    private int leftFrontTarget = 0;
-    private int rightFrontTarget = 0;
-    private int leftBackTarget = 0;
-    private int rightBackTarget = 0;
+
+    double leftFrontPower = .5;
+    double leftBackPower = .5;
+    double rightFrontPower = .5;
+    double rightBackPower = .5;
 
 
-    static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
+    double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
     static final double TURN_SPEED = 0.2;     // Max Turn speed to limit turn rate
     static final double HEADING_THRESHOLD = 1.0;
 
@@ -70,7 +75,6 @@ public class IMUAndEncoder extends LinearOpMode {
     @Override
     public void runOpMode() {
         telemetry.setAutoClear(true);
-
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         parameters.calibrationDataFile = "BNO055IMU";
@@ -111,11 +115,7 @@ public class IMUAndEncoder extends LinearOpMode {
         telemetry.addData("Starting at", "%7d :%7d :%7d :%7d", leftFrontMotor.getCurrentPosition(),
                 rightFrontMotor.getCurrentPosition(), leftBackMotor.getCurrentPosition(),
                 rightBackMotor.getCurrentPosition());
-        telemetry.addData("yaw:", " %f", angels.firstAngle);
-        telemetry.addData("pitch", "%f", angels.secondAngle);
-        telemetry.addData("role", "%f", angels.thirdAngle);
-        telemetry.addData("angel:", "%f", angels.firstAngle);
-        telemetry.addData("angle: ", "%f", angels.firstAngle);
+
         telemetry.update();
 
 
@@ -126,29 +126,23 @@ public class IMUAndEncoder extends LinearOpMode {
         targetAngle = angels.firstAngle;
         time.reset();
 
+        telemetry.addData("yaw:", " %f", angels.firstAngle);
+        telemetry.addData("pitch", "%f", angels.secondAngle);
+        telemetry.addData("role", "%f", angels.thirdAngle);
+        telemetry.addData("angel:", "%f", angels.firstAngle);
+        telemetry.addData("angle: ", "%f", angels.firstAngle);
+        telemetry.update();
+
         while (opModeIsActive()) {
 
-            angels = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
             // *****************Dead reckoning list*************
             // Distances in inches, angles in deg, speed 0.0 to 0.6
+
             moveForward(40, fast);
 
 
-            if (angels.firstAngle < targetAngle || angels.firstAngle > targetAngle) {
-                double yaw = checkDirection();
-
-                leftFrontSpeed += yaw;
-                leftBackSpeed += yaw;
-                rightFrontSpeed -= yaw;
-                rightBackSpeed -= yaw;
-
-                leftFrontMotor.setPower(leftFrontSpeed);
-                leftBackMotor.setPower(leftBackSpeed);
-                rightFrontMotor.setPower(rightFrontSpeed);
-                rightBackMotor.setPower(rightBackSpeed);
 
 
-            }
         }
     }
 
@@ -159,21 +153,26 @@ public class IMUAndEncoder extends LinearOpMode {
 
 
     private float Angle () {
-        Orientation angelsCurrent = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-        float CurrentAngle = angelsCurrent.firstAngle;
 
-       return CurrentAngle;
+        targetAngle = angels.firstAngle;
+        float CurrentAngle;
+        Orientation angels2 = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+        CurrentAngle = angels2.firstAngle;
+
+        float deltaAngle = targetAngle - CurrentAngle;
+
+        return deltaAngle;
     }
 
     private double checkDirection() {
         // The gain value determines how sensitive the correction is to direction changes.
         // You will have to experiment with your robot to get small smooth direction changes
         // to stay on a straight line.
-        double correction, angle, gain = .15;
+        double correction, angle, gain = .40;
 
         angle = Angle();
 
-        if (angle == 0) {
+        if (angle == targetAngle) {
             correction = 0;
         }// no adjustment.
         else {
@@ -183,8 +182,9 @@ public class IMUAndEncoder extends LinearOpMode {
 
         return correction;
     }
-        private void moveForward(int howMuch, double speed) {
+        private void moveForward(int howMuch, double speed ) {
         // "howMuch" is in inches. A negative howMuch moves backward.
+            Angle();
 
         // Fetch motor positions:
         lfPos = leftFrontMotor.getCurrentPosition();
@@ -193,10 +193,10 @@ public class IMUAndEncoder extends LinearOpMode {
         rrPos = rightBackMotor.getCurrentPosition();
 
         // Calculate new targets based on input:
-        lfPos = (int) (howMuch * clicksPerInch);
-        rfPos = (int) (howMuch * clicksPerInch);
-        lrPos = (int) (howMuch * clicksPerInch);
-        rrPos = (int) (howMuch * clicksPerInch);
+        lfPos += (int) (howMuch * clicksPerInch);
+        rfPos += (int) (howMuch * clicksPerInch);
+        lrPos += (int) (howMuch * clicksPerInch);
+        rrPos += (int) (howMuch * clicksPerInch);
 
         // Move robot to new position:
         leftFrontMotor.setTargetPosition(lfPos);
@@ -204,18 +204,38 @@ public class IMUAndEncoder extends LinearOpMode {
         leftBackMotor.setTargetPosition(lrPos);
         rightBackMotor.setTargetPosition(rrPos);
 
+
+
         // Set the drive motor run modes to prepare for move to encoder:
         leftFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        leftFrontMotor.setPower(speed);
-        rightFrontMotor.setPower(speed);
-        leftBackMotor.setPower(speed);
-        rightBackMotor.setPower(speed);
+        leftFrontMotor.setPower(leftFrontPower);
+        rightFrontMotor.setPower(leftBackPower);
+        leftBackMotor.setPower(rightFrontPower);
+        rightBackMotor.setPower(rightBackPower);
 
-        // Wait for move to complete:
+           if(Angle() > targetAngle){
+               leftFrontMotor.setPower(DRIVE_SPEED +.2);
+               rightFrontMotor.setPower(DRIVE_SPEED);
+               leftBackMotor.setPower(DRIVE_SPEED + .2);
+               rightBackMotor.setPower(DRIVE_SPEED);
+           }
+           else if (Angle() < targetAngle){
+               leftFrontMotor.setPower(DRIVE_SPEED);
+               rightFrontMotor.setPower(DRIVE_SPEED + .2);
+               leftBackMotor.setPower(DRIVE_SPEED);
+               rightBackMotor.setPower(DRIVE_SPEED + .2);
+           }
+           else {
+               leftFrontMotor.setPower(DRIVE_SPEED);
+               rightFrontMotor.setPower(DRIVE_SPEED);
+               leftBackMotor.setPower(DRIVE_SPEED);
+               rightBackMotor.setPower(DRIVE_SPEED);
+           }
+            // Wait for move to complete:
         while (leftFrontMotor.isBusy() && rightFrontMotor.isBusy()) {
 
             // Display info for the driver:
@@ -254,10 +274,10 @@ public class IMUAndEncoder extends LinearOpMode {
         rightFrontMotor.setTargetPosition(rfPos);
         leftBackMotor.setTargetPosition(lrPos);
         rightBackMotor.setTargetPosition(rrPos);
-        leftFrontMotor.setPower(speed);
-        rightFrontMotor.setPower(speed);
-        leftBackMotor.setPower(speed);
-        rightBackMotor.setPower(speed);
+        leftFrontMotor.setPower(leftFrontPower);
+        rightFrontMotor.setPower(leftBackPower);
+        leftBackMotor.setPower(rightFrontPower);
+        rightBackMotor.setPower(rightBackPower);
 
         // Wait for move to complete:
         while (leftFrontMotor.isBusy() && rightFrontMotor.isBusy() &&
@@ -280,7 +300,7 @@ public class IMUAndEncoder extends LinearOpMode {
 
     }
 
-    private void turnClockwise(int whatAngle, double speed) {
+    private void turnClockwise(float whatAngle, double speed) {
         // "whatAngle" is in degrees. A negative whatAngle turns counterclockwise.
 
         // Fetch motor positions:
@@ -370,5 +390,42 @@ public class IMUAndEncoder extends LinearOpMode {
         rightBackMotor.setPower(0);
 
     }
+    private void correct(int howMuch,double WitchDirection) {
+
+        lfPos = leftFrontMotor.getCurrentPosition();
+        rfPos = rightFrontMotor.getCurrentPosition();
+        lrPos = leftBackMotor.getCurrentPosition();
+        rrPos = rightBackMotor.getCurrentPosition();
+
+        // Calculate new targets based on input:
+        lfPos += (int) (howMuch * clicksPerInch);
+        rfPos += (int) (howMuch * clicksPerInch);
+        lrPos += (int) (howMuch * clicksPerInch);
+        rrPos += (int) (howMuch * clicksPerInch);
+
+        leftFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFrontMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // Move robot to new position:
+
+        if (WitchDirection == left) {
+            leftFrontMotor.setTargetPosition(-lfPos);
+            rightFrontMotor.setTargetPosition(rfPos);
+            leftBackMotor.setTargetPosition(-lrPos);
+            rightBackMotor.setTargetPosition(rrPos);
+        }
+        if (WitchDirection == right) {
+            leftFrontMotor.setTargetPosition(lfPos);
+            rightFrontMotor.setTargetPosition(-rfPos);
+            leftBackMotor.setTargetPosition(lrPos);
+            rightBackMotor.setTargetPosition(-rrPos);
+        }
+    }
+
 }
+
+
+
 

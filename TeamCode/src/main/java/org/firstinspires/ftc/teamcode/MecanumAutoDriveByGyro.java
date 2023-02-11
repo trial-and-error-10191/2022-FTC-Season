@@ -142,9 +142,10 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
     // We define one value when Turning (larger errors), and the other is used when Driving straight (smaller errors).
     // Increase these numbers if the heading does not corrects strongly enough (eg: a heavy robot or using tracks)
     // Decrease these numbers if the heading does not settle on the correct value (eg: very agile robot with omni wheels)
-    static final double     P_TURN_GAIN            = 0.02;     // Larger is more responsive, but also less stable
-    static final double     P_DRIVE_GAIN           = 0.03;     // Larger is more responsive, but also less stable
-
+    static final double     P_TURN_GAIN_STRAIGHT           = 0.02;     // Larger is more responsive, but also less stable
+    static final double     P_DRIVE_GAIN_STRAIGHT           = 0.03;     // Larger is more responsive, but also less stable
+    static final double     P_TURN_GAIN_STRAFE            = 0.01;     // Larger is more responsive, but also less stable
+    static final double     P_DRIVE_GAIN_STRAFE           = 0.03;
 
     @Override
     public void runOpMode() {
@@ -203,7 +204,32 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         //          holdHeading() is used after turns to let the heading stabilize
         //          Add a sleep(2000) after any step to keep the telemetry data visible for review
 
-        driveStraight(DRIVE_SPEED, 200.0, 0.0);    // Drive Forward 24"
+        // Drive Forward 24"
+
+        driveStraight(.5,24,targetHeading);
+        holdHeading(.8,targetHeading,1.0);
+        strafe(.5,-24,targetHeading);
+        holdHeading(.8,targetHeading,1.0);
+        driveStraight(.5,24,targetHeading);
+        holdHeading(.8,targetHeading,1.0);
+        strafe(.5,24,targetHeading);
+
+
+        holdHeading(.8,targetHeading,1.0);
+       strafe(.5,-24,targetHeading);
+        holdHeading(.8,targetHeading,1.0);
+        driveStraight(.5,-24,targetHeading);
+
+        holdHeading(.8,targetHeading,1.0);
+        driveStraight(.5,-24,targetHeading);
+        holdHeading(.8,targetHeading,1.0);
+        strafe(.5,24,targetHeading);
+        holdHeading(.8,targetHeading,1.0);
+
+        driveStraight(.5,-24,targetHeading);
+
+
+        // Drive Forward 24"
         //turnToHeading(TURN_SPEED, -45.0);               // Turn  CW to -45 Degrees
         //holdHeading(TURN_SPEED, -45.0, 0.5);   // Hold -45 Deg heading for a 1/2 second
 
@@ -251,11 +277,16 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         if (opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            int moveCounts = (int)(distance * COUNTS_PER_INCH);
-            leftFrontTarget = leftFrontDrive.getCurrentPosition() + moveCounts;
-            leftBackTarget = leftBackDrive.getCurrentPosition() + moveCounts;
-            rightFrontTarget = rightFrontDrive.getCurrentPosition() + moveCounts;
-            rightBackTarget = rightBackDrive.getCurrentPosition() + moveCounts;
+            leftFrontTarget = leftFrontDrive.getCurrentPosition();
+            rightFrontTarget = rightFrontDrive.getCurrentPosition();
+            leftBackTarget = leftBackDrive.getCurrentPosition();
+            rightBackTarget = rightBackDrive.getCurrentPosition();
+
+            // Calculate new targets based on input:
+            leftFrontTarget += (int) (distance * COUNTS_PER_INCH);
+            rightFrontTarget += (int) (distance * COUNTS_PER_INCH);
+            leftBackTarget += (int) (distance * COUNTS_PER_INCH);
+            rightBackTarget += (int) (distance * COUNTS_PER_INCH);
 
             // Set Target FIRST, then turn on RUN_TO_POSITION
             leftFrontDrive.setTargetPosition(leftFrontTarget);
@@ -277,7 +308,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
                    (leftFrontDrive.isBusy() && rightBackDrive.isBusy())) {
 
                 // Determine required steering to keep on heading
-                turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
+                turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN_STRAIGHT);
 
                 // if driving in reverse, the motor correction also needs to be reversed
                 if (distance < 0)
@@ -313,13 +344,13 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
     public void turnToHeading(double maxTurnSpeed, double heading) {
 
         // Run getSteeringCorrection() once to pre-calculate the current error
-        getSteeringCorrection(heading, P_DRIVE_GAIN);
+        getSteeringCorrection(heading, P_DRIVE_GAIN_STRAIGHT);
 
         // keep looping while we are still active, and not on heading.
         while (opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
 
             // Determine required steering to keep on heading
-            turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
+            turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN_STRAIGHT);
 
             // Clip the speed to the maximum permitted value.
             turnSpeed = Range.clip(turnSpeed, -maxTurnSpeed, maxTurnSpeed);
@@ -334,7 +365,100 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         // Stop all motion;
         moveRobot(0, 0);
     }
+    public void strafe(double maxDriveSpeed,
+                       double distance,
+                       double heading) {
 
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            //int moveCounts = (int)(distance * COUNTS_PER_INCH);
+            /*
+            leftFrontTarget = leftFrontDrive.getCurrentPosition() - moveCounts;
+            leftBackTarget = leftBackDrive.getCurrentPosition() + moveCounts;
+            rightFrontTarget = rightFrontDrive.getCurrentPosition() + moveCounts;
+            rightBackTarget = rightBackDrive.getCurrentPosition() - moveCounts;
+            */
+            leftFrontTarget = leftFrontDrive.getCurrentPosition();
+            rightFrontTarget = rightFrontDrive.getCurrentPosition();
+            leftBackTarget = leftBackDrive.getCurrentPosition();
+            rightBackTarget = rightBackDrive.getCurrentPosition();
+
+            // Calculate new targets based on input:
+            leftFrontTarget += (int) (distance * COUNTS_PER_INCH);
+            rightFrontTarget -= (int) (distance * COUNTS_PER_INCH);
+            leftBackTarget -= (int) (distance * COUNTS_PER_INCH);
+            rightBackTarget += (int) (distance * COUNTS_PER_INCH);
+
+            leftFrontDrive.setTargetPosition(leftFrontTarget);
+            leftBackDrive.setTargetPosition(leftBackTarget);
+            rightFrontDrive.setTargetPosition(rightFrontTarget);
+            rightBackDrive.setTargetPosition(rightBackTarget);
+
+            leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            // Set the required driving speed  (must be positive for RUN_TO_POSITION)
+            // Start driving straight, and then enter the control loop
+            maxDriveSpeed = Math.abs(maxDriveSpeed);
+            moveRobotStrafe(maxDriveSpeed, 0);
+
+            // keep looping while we are still active, and BOTH motors are running.
+            while (opModeIsActive() &&
+                    (leftFrontDrive.isBusy() && rightBackDrive.isBusy())) {
+
+                // Determine required steering to keep on heading
+                turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN_STRAFE);
+
+                // if driving in reverse, the motor correction also needs to be reversed
+                if (distance < 0)
+                    turnSpeed *= -1.0;
+
+                // Apply the turning correction to the current driving speed.
+                moveRobotStrafe(driveSpeed, turnSpeed);
+
+                // Display drive status for the driver.
+                sendTelemetry(true);
+            }
+
+            // Stop all motion & Turn off RUN_TO_POSITION
+            moveRobot(0, 0);
+            leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+    }
+    public void moveRobotStrafe(double drive, double turn) {
+        driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
+        turnSpeed  = turn;      // save this value as a class member so it can be used by telemetry.
+
+        leftFrontSpeed  = drive + turn;
+        leftBackSpeed  = -drive + turn;
+        rightFrontSpeed = -drive - turn;
+        rightBackSpeed = drive - turn;
+
+        // Scale speeds down if either one exceeds +/- 1.0;
+        double max;
+        max = Math.max(Math.abs(leftFrontSpeed), Math.abs(rightFrontSpeed));
+        max = Math.max(max, Math.abs(leftBackSpeed));
+        max = Math.max(max, Math.abs(rightBackSpeed));
+
+        if (max > 1.0) {
+            leftFrontSpeed /= max;
+            rightFrontSpeed /= max;
+            leftBackSpeed /= max;
+            rightBackSpeed /= max;
+        }
+
+        leftFrontDrive.setPower(leftFrontSpeed);
+        rightFrontDrive.setPower(rightFrontSpeed);
+        leftBackDrive.setPower(leftBackSpeed);
+        rightBackDrive.setPower(rightBackSpeed);
+
+    }
     /**
      *  Method to obtain & hold a heading for a finite amount of time
      *  Move will stop once the requested time has elapsed
@@ -346,6 +470,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
      *                   If a relative angle is required, add/subtract from current heading.
      * @param holdTime   Length of time (in seconds) to hold the specified heading.
      */
+
     public void holdHeading(double maxTurnSpeed, double heading, double holdTime) {
 
         ElapsedTime holdTimer = new ElapsedTime();
@@ -354,7 +479,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         // keep looping while we have time remaining.
         while (opModeIsActive() && (holdTimer.time() < holdTime)) {
             // Determine required steering to keep on heading
-            turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
+            turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN_STRAIGHT);
 
             // Clip the speed to the maximum permitted value.
             turnSpeed = Range.clip(turnSpeed, -maxTurnSpeed, maxTurnSpeed);
