@@ -206,9 +206,11 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
 
         // Drive Forward 24"
 
-        driveStraight(.5,24,targetHeading);
-        holdHeading(.8,targetHeading,1.0);
-        strafe(.5,-24,targetHeading);
+//        driveStraight(.5,24,targetHeading);
+//        holdHeading(.8,targetHeading,0.5);
+//        strafe(.2,-72,targetHeading);
+        strafe(0.2, 60, 0);
+ /*
         holdHeading(.8,targetHeading,1.0);
         driveStraight(.5,24,targetHeading);
         holdHeading(.8,targetHeading,1.0);
@@ -229,6 +231,8 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         driveStraight(.5,-24,targetHeading);
 
 
+
+  */
         // Drive Forward 24"
         //turnToHeading(TURN_SPEED, -45.0);               // Turn  CW to -45 Degrees
         //holdHeading(TURN_SPEED, -45.0, 0.5);   // Hold -45 Deg heading for a 1/2 second
@@ -410,7 +414,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
                     (leftFrontDrive.isBusy() && rightBackDrive.isBusy())) {
 
                 // Determine required steering to keep on heading
-                turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN_STRAFE);
+               turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN_STRAFE);
 
                 // if driving in reverse, the motor correction also needs to be reversed
                 if (distance < 0)
@@ -424,7 +428,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
             }
 
             // Stop all motion & Turn off RUN_TO_POSITION
-            moveRobot(0, 0);
+            moveRobotStrafe(0, 0);
             leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -435,10 +439,10 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
         turnSpeed  = turn;      // save this value as a class member so it can be used by telemetry.
 
-        leftFrontSpeed  = drive + turn;
-        leftBackSpeed  = -drive + turn;
-        rightFrontSpeed = -drive - turn;
-        rightBackSpeed = drive - turn;
+        leftFrontSpeed  = drive - turn;
+        leftBackSpeed  = drive - turn;
+        rightFrontSpeed = drive + turn;
+        rightBackSpeed = drive + turn;
 
         // Scale speeds down if either one exceeds +/- 1.0;
         double max;
@@ -448,7 +452,6 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
 
         if (max > 1.0) {
             leftFrontSpeed /= max;
-            rightFrontSpeed /= max;
             leftBackSpeed /= max;
             rightBackSpeed /= max;
         }
@@ -487,12 +490,14 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
             // Pivot in place by applying the turning correction
             moveRobot(0, turnSpeed);
 
+
             // Display drive status for the driver.
             sendTelemetry(false);
         }
 
         // Stop all motion;
         moveRobot(0, 0);
+        moveRobotStrafe(0,0);
     }
 
     // **********  LOW Level driving functions.  ********************
