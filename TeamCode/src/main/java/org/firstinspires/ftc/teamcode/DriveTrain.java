@@ -83,7 +83,6 @@ public class DriveTrain {
         }
 
         // This is the code for the precision mode:
-        // a subsystem for LED will need to be made.
         if (toggle) {
             leftFrontDrive.setPower(leftFrontPower / precisionModeThrottle);
             rightFrontDrive.setPower(rightFrontPower / precisionModeThrottle);
