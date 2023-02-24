@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-// This is a subsystem file.
+// This file is a subsystem file for the drivetrain.
 public class DriveTrain {
 
     // Hardware:
@@ -16,7 +16,6 @@ public class DriveTrain {
     boolean toggle = false;
 
     public DriveTrain(HardwareMap hwMap) {
-
         // Initializes motor names:
         leftFrontDrive = hwMap.get(DcMotor.class, "leftFront");
         leftBackDrive = hwMap.get(DcMotor.class, "leftBack");
@@ -31,6 +30,7 @@ public class DriveTrain {
     }
 
     public void teleDrive(double axial, double lateral, double yaw) {
+
         double leftFrontPower = 0;
         double rightFrontPower = 0;
         double leftBackPower = 0;

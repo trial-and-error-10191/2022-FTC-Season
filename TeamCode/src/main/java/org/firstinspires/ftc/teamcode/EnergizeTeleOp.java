@@ -10,7 +10,6 @@ public class EnergizeTeleOp extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
         // Initiates Bessie!
         Bessie bessie = new Bessie(hardwareMap);
         bessie.liftAndGripper.autoGripper(false);

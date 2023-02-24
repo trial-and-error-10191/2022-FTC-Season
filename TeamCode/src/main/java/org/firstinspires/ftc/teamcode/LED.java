@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+// This file is a subsystem file for the LED.
 public class LED {
     DigitalChannel redLED, greenLED;
 
@@ -12,6 +13,7 @@ public class LED {
     ElapsedTime waitTimeToggle = new ElapsedTime();
 
     public LED (HardwareMap hwMap) {
+
         redLED = hwMap.get(DigitalChannel.class, "redLED");
         greenLED = hwMap.get(DigitalChannel.class, "greenLED");
 
@@ -20,6 +22,7 @@ public class LED {
     }
     
     public void teleLED (boolean toggleButton) {
+        // If toggle button is pressed, set toggle to opposite value:
         if (toggleButton && waitTimeToggle.time() > .75) {
             toggle = !toggle;
             if (toggle) {

@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+// This file is a subsystem file for the lift and gripper.
 public class LiftAndGripper {
 
     // Hardware:
@@ -38,7 +39,7 @@ public class LiftAndGripper {
     }
 
     public void autoGripper(boolean status) {
-
+        // True status opens the grippers, false status closes the gripper:
         if (status) {
             rightServo.setPosition(rightOpenPos);
             leftServo.setPosition(leftOpenPos);
@@ -51,7 +52,6 @@ public class LiftAndGripper {
     }
 
     public void teleGripper(boolean openInput, boolean closeInput) {
-
         // Opens gripper.
         if (openInput) {
             rightServo.setPosition(rightOpenPos);
@@ -67,7 +67,7 @@ public class LiftAndGripper {
     }
 
     public void teleLift(double liftPower) {
-
+        // If touch sensor or limit switch is pressed, stop power:
         if(!sensorTouch.getState() && liftPower < 0.0) {
             dualLift(0.0);
         }
@@ -80,7 +80,7 @@ public class LiftAndGripper {
     }
 
     public void dualLift(double power) {
-
+        // Uses one value to set power of both lift motors:
         liftMotor1.setPower(power);
         liftMotor2.setPower(power);
     }
