@@ -6,12 +6,14 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 // Bessie is the name of our robot (thanks Jake).
 public class Bessie {
     public DriveTrain driveTrain;
-    public LiftAndGripper liftAndGripper;
+    public Gripper gripper;
     public LED led;
+    public Lift lift;
     public Bessie(HardwareMap hwMap) {
         driveTrain = new DriveTrain(hwMap);
-        liftAndGripper = new LiftAndGripper(hwMap);
+        gripper = new Gripper(hwMap);
         led = new LED(hwMap);
+        lift = new Lift(hwMap);
     }
 
 }

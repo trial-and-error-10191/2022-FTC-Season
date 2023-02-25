@@ -7,13 +7,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class DriveTrain {
 
     // Hardware:
-    DcMotor leftFrontDrive, leftBackDrive, rightFrontDrive, rightBackDrive = null;
+    DcMotor leftFrontDrive, leftBackDrive, rightFrontDrive, rightBackDrive;
 
     // Double variables:
     double maxDrivePower = 0.75;
     double precisionModeThrottle = 2;
-
-    boolean toggle = false;
 
     public DriveTrain(HardwareMap hwMap) {
         // Initializes motor names:
@@ -29,7 +27,7 @@ public class DriveTrain {
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
     }
 
-    public void teleDrive(double axial, double lateral, double yaw) {
+    public void teleDrive(double axial, double lateral, double yaw, boolean toggle) {
 
         double leftFrontPower = 0;
         double rightFrontPower = 0;
@@ -95,5 +93,6 @@ public class DriveTrain {
             rightBackDrive.setPower(rightBackPower);
 
         }
+
     }
 }

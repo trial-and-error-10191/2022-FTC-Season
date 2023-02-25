@@ -12,22 +12,39 @@ public class EnergizeTeleOp extends LinearOpMode {
     public void runOpMode() {
         // Initiates Bessie!
         Bessie bessie = new Bessie(hardwareMap);
-        bessie.liftAndGripper.autoGripper(false);
+        bessie.gripper.autoGripper(false);
 
         waitForStart();
         while (opModeIsActive()) {
 
             // This controls the drive train:
-            bessie.driveTrain.teleDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.left_stick_y);
+            bessie.driveTrain.teleDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x, bessie.led.toggle);
 
             // This controls the grippers:
-            bessie.liftAndGripper.teleGripper(gamepad2.right_bumper, gamepad2.left_bumper);
+            bessie.gripper.teleGripper(gamepad2.right_bumper, gamepad2.left_bumper);
 
             // This controls the lift:
-            bessie.liftAndGripper.teleLift(-gamepad2.left_stick_y);
+            bessie.lift.teleLift(-gamepad2.left_stick_y);
 
             // This controls the LED:
             bessie.led.teleLED(gamepad1.x);
+
+            telemetry.addData("Front Driving Motors | Left, Right", "%4.2f, %4.2f",
+                    bessie.driveTrain.leftFrontDrive.getPower(),
+                    bessie.driveTrain.rightFrontDrive.getPower());
+            telemetry.addData("Back Driving Motors | Left, Right", "%4.2f, %4.2f",
+                    bessie.driveTrain.leftBackDrive.getPower(),
+                    bessie.driveTrain.rightBackDrive.getPower());
+            telemetry.addData("Lift Motors | Left, Right", "%4.2f, %4.2f",
+                    bessie.lift.liftMotor1.getPower(),
+                    bessie.lift.liftMotor2.getPower());
+            telemetry.addData("Top Limit Switch Status",
+                    String.valueOf(bessie.lift.limitSwitch.getState()));
+            telemetry.addData("Bottom Limit Switch Status",
+                    String.valueOf(bessie.lift.sensorTouch.getState()));
+            telemetry.addData("Precision Mode Toggle",
+                    String.valueOf(bessie.led.toggle));
+            telemetry.update();
         }
     }
 }

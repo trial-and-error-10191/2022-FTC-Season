@@ -24,7 +24,7 @@ public class EnergizeV2TeleOp extends LinearOpMode {
     private ElapsedTime waitTimeToggle = new ElapsedTime();
     private DcMotor liftMotor1 = null;
     private DcMotor liftMotor2 = null;
-    //private  DigitalChannel limitSwitch = null;
+    private DigitalChannel limitSwitch = null;
 
     double liftPower = 0.0;
     double INCREMENT = 0.01;
@@ -55,8 +55,8 @@ public class EnergizeV2TeleOp extends LinearOpMode {
     private DistanceSensor sensorRange;
     private DigitalChannel sensorTouch;
 
-    //private DigitalChannel redLED;
-    //private DigitalChannel greenLED;
+    private DigitalChannel redLED;
+    private DigitalChannel greenLED;
 
     boolean toggle = false;
 
@@ -69,10 +69,10 @@ public class EnergizeV2TeleOp extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFront");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
-        //redLED = hardwareMap.get(DigitalChannel.class, "redLED");
-        //greenLED = hardwareMap.get(DigitalChannel.class, "greenLED");
+        redLED = hardwareMap.get(DigitalChannel.class, "redLED");
+        greenLED = hardwareMap.get(DigitalChannel.class, "greenLED");
 
-        //limitSwitch = hardwareMap.get(DigitalChannel.class, "limitSwitch");
+        limitSwitch = hardwareMap.get(DigitalChannel.class, "limitSwitch");
 
         // Corresponds driving servo names to servo variables and set beginning position.
         rightServo = hardwareMap.get(Servo.class, "rightservo");
@@ -100,8 +100,8 @@ public class EnergizeV2TeleOp extends LinearOpMode {
 
         //MoveLift(0.0);
 
-        //redLED.setMode(DigitalChannel.Mode.OUTPUT);
-        //greenLED.setMode(DigitalChannel.Mode.OUTPUT);
+        redLED.setMode(DigitalChannel.Mode.OUTPUT);
+        greenLED.setMode(DigitalChannel.Mode.OUTPUT);
 
         // Waits for driver to press play.
         telemetry.addData("Status", "Initialized");
@@ -167,22 +167,20 @@ public class EnergizeV2TeleOp extends LinearOpMode {
                 rightBackPower = -MAX_DRIVE_POWER;
             }
 
-            // if (gamepad1.x && waitTimeToggle.time() > .75) {
-            //  toggle = !toggle;
-            //  if(toggle) {
-            //    redLED.setState(false);
-            //   greenLED.setState(true);
+            if (gamepad1.x && waitTimeToggle.time() > .75) {
+                toggle = !toggle;
+                if (toggle) {
+                    redLED.setState(false);
+                    greenLED.setState(true);
 
-            // }
+                } else {
 
-            // else{
+                    redLED.setState(true);
+                    greenLED.setState(false);
 
-            // redLED.setState(true);
-            //greenLED.setState(false);
-
-            //}
-            //  waitTimeToggle.reset();
-            // }
+                }
+                waitTimeToggle.reset();
+            }
 
             if (toggle) {
                 leftFrontDrive.setPower(leftFrontPower / PRECISION_MODE_THROTTLE);
@@ -230,14 +228,12 @@ public class EnergizeV2TeleOp extends LinearOpMode {
 //                MoveLift(Increment(-10));
 //            }
 
-            if(!sensorTouch.getState() && -gamepad2.left_stick_y < 0.0) {
+            if (!sensorTouch.getState() && -gamepad2.left_stick_y < 0.0) {
                 dualLift(0.0);
-            }
-            // else if (!limitSwitch.getState() && -gamepad2.left_stick_y > 0.0) {
-            //    dualLift(0.0);
-            // }
-            else {
-            dualLift(-gamepad2.left_stick_y);
+            } else if (!limitSwitch.getState() && -gamepad2.left_stick_y > 0.0) {
+                dualLift(0.0);
+            } else {
+                dualLift(-gamepad2.left_stick_y);
             }
 
             // Shows the elapsed game time and wheel power.
@@ -248,69 +244,65 @@ public class EnergizeV2TeleOp extends LinearOpMode {
             telemetry.addData("Lift Motors", "%5.2f", liftPower);
             telemetry.addData("Precision Mode", String.valueOf(toggle));
             telemetry.addData("Height Distance", sensorRange.getDistance(DistanceUnit.CM));
-            //telemetry.addData("Limit Switch", String.valueOf(limitSwitch.getState()));
+            telemetry.addData("Limit Switch", String.valueOf(limitSwitch.getState()));
             telemetry.update();
         }
 
     }
 
-    //
-//    public void MoveLift(double targetHeight) {
-//
-//        double liftPower = 0.0;
-//        while (sensorRange.getDistance(DistanceUnit.CM) < targetHeight - WIGGLE_ROOM)
-//        {
-//            liftPower = RampUpLiftPower(liftPower);
-//            dualLift(liftPower);
-//        }
-//        liftPower = 0.0;
-//        dualLift(liftPower);
-//        while (sensorRange.getDistance(DistanceUnit.CM) > targetHeight + WIGGLE_ROOM)
-//        {
-//            if(!sensorTouch.getState()){
-//                dualLift(0.0);
-//                break;
-//            }
-//            else  {
-//                liftPower = RampDownLiftPower(liftPower);
-//                dualLift(liftPower);
-//            }
-//        }
-//        liftPower = 0.0;
-//        dualLift(liftPower);
-//    }
-//
-//    public double RampUpLiftPower(double liftPower) {
-//
-//        if (liftPower < MAX_POWER)
-//        {
-//            return liftPower + LIFT_POWER_INCREMENT;
-//        }
-//        return liftPower;
-//    }
-//
-//    public double RampDownLiftPower(double liftPower) {
-//
-//        if (liftPower > - MAX_POWER)
-//        {
-//            return liftPower - LIFT_POWER_INCREMENT;
-//        }
-//        return liftPower;
-//    }
-//
+
+    public void MoveLift(double targetHeight) {
+
+        double liftPower = 0.0;
+        while (sensorRange.getDistance(DistanceUnit.CM) < targetHeight - WIGGLE_ROOM) {
+            liftPower = RampUpLiftPower(liftPower);
+            dualLift(liftPower);
+        }
+        liftPower = 0.0;
+        dualLift(liftPower);
+        while (sensorRange.getDistance(DistanceUnit.CM) > targetHeight + WIGGLE_ROOM) {
+            if (!sensorTouch.getState()) {
+                dualLift(0.0);
+                break;
+            } else {
+                liftPower = RampDownLiftPower(liftPower);
+                dualLift(liftPower);
+            }
+        }
+        liftPower = 0.0;
+        dualLift(liftPower);
+    }
+
+    public double RampUpLiftPower(double liftPower) {
+
+        if (liftPower < MAX_POWER) {
+            return liftPower + LIFT_POWER_INCREMENT;
+        }
+        return liftPower;
+    }
+
+    public double RampDownLiftPower(double liftPower) {
+
+        if (liftPower > -MAX_POWER) {
+            return liftPower - LIFT_POWER_INCREMENT;
+        }
+        return liftPower;
+    }
+
     public void dualLift(double power) {
 
         liftMotor1.setPower(power);
         liftMotor2.setPower(power);
     }
+
+
+    public double Increment(double Incremented_height) {
+
+        if (Incremented_height + sensorRange.getDistance(DistanceUnit.CM) <= MAX_HEIGHT) {
+            return sensorRange.getDistance(DistanceUnit.CM) + Incremented_height;
+        }
+        return sensorRange.getDistance(DistanceUnit.CM);
+
+    }
 }
-//
-//    public double Increment(double Incremented_height){
-//
-//        //if(Incremented_height + sensorRange.getDistance(DistanceUnit.CM) <= MAX_HEIGHT) {
-//           // return sensorRange.getDistance(DistanceUnit.CM) + Incremented_height;
-//        }
-//        return sensorRange.getDistance(DistanceUnit.CM);
-//
-//    }
-//}
+
