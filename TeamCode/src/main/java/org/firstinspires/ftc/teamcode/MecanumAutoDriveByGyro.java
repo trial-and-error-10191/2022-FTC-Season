@@ -34,12 +34,16 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 /**
@@ -96,11 +100,18 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
     /* Declare OpMode members. */
     //private DcMotor         leftDrive   = null;
     //private DcMotor         rightDrive  = null;
+    private DistanceSensor sensorRangeLeft;
+    private DistanceSensor sensorRangeBackLeft;
+    private DistanceSensor sensorRangeRight;
+    private DistanceSensor sensorRangeBackRight;
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
     private BNO055IMU       imu         = null;      // Control/Expansion Hub IMU
+
+    private ElapsedTime runtime = new ElapsedTime();
+
 
     private double          robotHeading  = 0;
     private double          headingOffset = 0;
@@ -110,6 +121,12 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
     // but still be displayed by sendTelemetry()
     private double  targetHeading = 0;
     private double  driveSpeed    = 0;
+   private double  targetDistence = 66.5;
+
+    private DistanceSensor sensorRange;
+    private DigitalChannel sensorTouch;
+
+
     private double  turnSpeed     = 0;
     private double  leftFrontSpeed     = 0;
     private double  rightFrontSpeed    = 0;
@@ -119,6 +136,31 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
     private int     leftBackTarget    = 0;
     private int     rightFrontTarget   = 0;
     private int     rightBackTarget   = 0;
+    private double leftDistence;
+    private double rightDistence;
+    private double distence;
+    private double correntdistence;
+
+    private DcMotor liftMotor1 = null;
+    private DcMotor liftMotor2 = null;
+
+    private Servo rightServo;
+    private Servo leftServo;
+
+    private final double MAX_POWER = 0.75;
+    private final double MAX_HEIGHT = 90;
+    private final double LIFT_POWER_INCREMENT = 0.05;
+    // when moving to a target height with the lift, this is how much flexibility the lift has
+    // in reaching the target height [cm]
+    private final double WIGGLE_ROOM = 1.5;
+
+    // target heights [cm]
+    private final double LOW_HEIGHT = 41.0;
+    private final double MED_HEIGHT = 65.0;
+    private final double HIGH_HEIGHT = 86.4;
+
+    private boolean open = true;
+    private boolean close = false;
 
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
@@ -158,6 +200,25 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFront");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
+        sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
+
+        sensorTouch = hardwareMap.get(DigitalChannel.class, "sensor_touch");
+        sensorTouch.setMode(DigitalChannel.Mode.INPUT);
+
+        rightServo = hardwareMap.get(Servo.class,"rightservo");
+        rightServo.setPosition(1.0);
+        leftServo = hardwareMap.get(Servo.class,"leftservo");
+        leftServo.setPosition(0.0);
+        Wait(5.0);
+        gripper(close);
+
+        liftMotor1  = hardwareMap.get(DcMotor.class, "LiftMotor1");
+        liftMotor2 = hardwareMap.get(DcMotor.class, "LiftMotor2");
+
+        liftMotor1.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor2.setDirection(DcMotor.Direction.REVERSE);
+
+        MoveLift(0.0);
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
@@ -168,6 +229,11 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+
+
+        sensorRangeLeft = hardwareMap.get(DistanceSensor.class, "sensor_range_left");
+
+        sensorRangeRight = hardwareMap.get(DistanceSensor.class, "sensor_range_right");
 
         // define initialization values for IMU, and then initialize it.
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -186,10 +252,21 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        telemetry.addData(">", "Robot Heading = %4.0f", getRawHeading());
+
+        telemetry.addData("Distance left front", sensorRangeLeft.getDistance(DistanceUnit.CM));
+        telemetry.update();
+
         // Wait for the game to start (Display Gyro value while waiting)
         while (opModeInInit()) {
-            telemetry.addData(">", "Robot Heading = %4.0f", getRawHeading());
+            //setup();
+            telemetry.addData(">", "Robot Heading = %f", getRawHeading());
+
+            telemetry.addData("Distance left front","%f", sensorRangeLeft.getDistance(DistanceUnit.CM));
+
+            telemetry.addData("Distance front right","%f", sensorRangeRight.getDistance(DistanceUnit.CM));
             telemetry.update();
+
         }
 
         // Set the encoders for closed loop speed control, and reset the heading.
@@ -209,30 +286,12 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
 //        driveStraight(.5,24,targetHeading);
 //        holdHeading(.8,targetHeading,0.5);
 //        strafe(.2,-72,targetHeading);
-        strafe(0.2, 60, 0);
- /*
-        holdHeading(.8,targetHeading,1.0);
-        driveStraight(.5,24,targetHeading);
-        holdHeading(.8,targetHeading,1.0);
-        strafe(.5,24,targetHeading);
 
 
-        holdHeading(.8,targetHeading,1.0);
-       strafe(.5,-24,targetHeading);
-        holdHeading(.8,targetHeading,1.0);
-        driveStraight(.5,-24,targetHeading);
-
-        holdHeading(.8,targetHeading,1.0);
-        driveStraight(.5,-24,targetHeading);
-        holdHeading(.8,targetHeading,1.0);
-        strafe(.5,24,targetHeading);
-        holdHeading(.8,targetHeading,1.0);
-
-        driveStraight(.5,-24,targetHeading);
+        setupHigh();
 
 
 
-  */
         // Drive Forward 24"
         //turnToHeading(TURN_SPEED, -45.0);               // Turn  CW to -45 Degrees
         //holdHeading(TURN_SPEED, -45.0, 0.5);   // Hold -45 Deg heading for a 1/2 second
@@ -273,6 +332,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
     *                   0 = fwd. +ve is CCW from fwd. -ve is CW from forward.
     *                   If a relative angle is required, add/subtract from the current robotHeading.
     */
+
     public void driveStraight(double maxDriveSpeed,
                               double distance,
                               double heading) {
@@ -334,6 +394,44 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         }
     }
 
+    public void rightHigh(){
+
+
+        holdHeading(.2,targetHeading,1.0);
+        driveStraight(.5,3,targetHeading);
+        holdHeading(.2,targetHeading,1.0);
+        MoveLift(LOW_HEIGHT);
+        holdHeading(.2,targetHeading,1.0);
+        strafe(.5,-24,targetHeading);
+        holdHeading(.2,targetHeading,1.0);
+        driveStraight(.5,47.5,targetHeading);
+        holdHeading(.2,targetHeading,1.0);
+        MoveLift(HIGH_HEIGHT);
+        holdHeading(.2,targetHeading,1.0);
+        strafe(.5,12,targetHeading);
+        holdHeading(.2,targetHeading,1.0);
+        gripper(open);
+        holdHeading(.2,targetHeading,1.0);
+    }
+    public void leftHigh(){
+
+
+        holdHeading(.2,targetHeading,1.0);
+        driveStraight(.5,3,targetHeading);
+        holdHeading(.2,targetHeading,1.0);
+        MoveLift(LOW_HEIGHT);
+        holdHeading(.2,targetHeading,1.0);
+        strafe(.5,24,targetHeading);
+        holdHeading(.2,targetHeading,1.0);
+        driveStraight(.5,47.5,targetHeading);
+        holdHeading(.2,targetHeading,1.0);
+        MoveLift(HIGH_HEIGHT);
+        holdHeading(.2,targetHeading,1.0);
+        strafe(.5,-12,targetHeading);
+        holdHeading(.2,targetHeading,1.0);
+        gripper(open);
+        holdHeading(.2,targetHeading,1.0);
+    }
     /**
      *  Method to spin on central axis to point in a new direction.
      *  Move will stop if either of these conditions occur:
@@ -361,6 +459,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
 
             // Pivot in place by applying the turning correction
             moveRobot(0, turnSpeed);
+            moveRobotStrafe(0,turnSpeed);
 
             // Display drive status for the driver.
             sendTelemetry(false);
@@ -368,7 +467,207 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
 
         // Stop all motion;
         moveRobot(0, 0);
+        moveRobotStrafe(0,0);
     }
+    private void gripper(boolean toggle){
+        if (toggle) {
+            rightServo.setPosition(1.0);
+            leftServo.setPosition(0.0);
+        }
+        else {
+            rightServo.setPosition(0.0);
+            leftServo.setPosition(1.0);
+        }
+    }
+    private void Wait(double seconds) {
+        runtime.reset();
+        while (runtime.time() < seconds) {
+
+        }
+    }
+    public void setupHigh(){
+
+
+
+
+       leftDistence =  sensorRangeLeft.getDistance(DistanceUnit.CM);
+       rightDistence =  sensorRangeRight.getDistance(DistanceUnit.CM);
+
+       if(leftDistence > 80){
+           correntdistence = rightDistence;
+       }
+        else if(rightDistence > 80){
+            correntdistence = leftDistence;
+        }
+
+       if(correntdistence > targetDistence){
+         startupStrafe(.2,targetDistence);
+       }
+      else if(correntdistence == targetDistence){
+          holdHeading(.5,targetHeading,1.0);
+      }
+      if(correntdistence == leftDistence){
+          leftHigh();
+      }
+      else if(correntdistence == rightDistence){
+          rightHigh();
+      }
+    }
+    public void startupStrafe(double maxDriveSpeed,double heading) {
+
+        double correctionCM = correntdistence;
+        double correctionIN = correctionCM * 0.393701;
+            if(correntdistence == leftDistence){
+                correctionCM = correntdistence - targetDistence;
+                correctionIN = correctionCM * 0.393701;
+
+                leftFrontTarget = (int) -correctionIN;
+                leftBackTarget = (int) correctionIN;
+                rightFrontTarget = (int) correctionIN;
+                rightBackTarget = (int) -correctionIN;
+
+                leftFrontDrive.setTargetPosition(leftFrontTarget);
+                leftBackDrive.setTargetPosition(leftBackTarget);
+                rightFrontDrive.setTargetPosition(rightFrontTarget);
+                rightBackDrive.setTargetPosition(rightBackTarget);
+            }
+        if(correntdistence == rightDistence){
+            correntdistence = leftDistence;
+            correctionCM = correntdistence - targetDistence;
+            correctionIN = correctionCM * 0.393701;
+            correctionIN = -correctionIN;
+
+            leftFrontTarget = (int) -correctionIN;
+            leftBackTarget = (int) correctionIN;
+            rightFrontTarget = (int) correctionIN;
+            rightBackTarget = (int) -correctionIN;
+
+            leftFrontDrive.setTargetPosition(leftFrontTarget);
+            leftBackDrive.setTargetPosition(leftBackTarget);
+            rightFrontDrive.setTargetPosition(rightFrontTarget);
+            rightBackDrive.setTargetPosition(rightBackTarget);
+        }
+        leftFrontTarget = leftFrontDrive.getCurrentPosition();
+        rightFrontTarget = rightFrontDrive.getCurrentPosition();
+        leftBackTarget = leftBackDrive.getCurrentPosition();
+        rightBackTarget = rightBackDrive.getCurrentPosition();
+
+        // Calculate new targets based on input:
+
+
+        leftFrontDrive.setTargetPosition(leftFrontTarget);
+        leftBackDrive.setTargetPosition(leftBackTarget);
+        rightFrontDrive.setTargetPosition(rightFrontTarget);
+        rightBackDrive.setTargetPosition(rightBackTarget);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        // Set the required driving speed  (must be positive for RUN_TO_POSITION)
+        // Start driving straight, and then enter the control loop
+        maxDriveSpeed = Math.abs(maxDriveSpeed);
+        moveRobotStrafe(maxDriveSpeed, 0);
+
+        // keep looping while we are still active, and BOTH motors are running.
+        while (opModeIsActive() &&
+                (leftFrontDrive.isBusy() && rightBackDrive.isBusy())) {
+
+            // Determine required steering to keep on heading
+            turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN_STRAFE);
+
+            // if driving in reverse, the motor correction also needs to be reversed
+            if (correctionIN < 0) {
+                turnSpeed *= -1.0;
+
+                // Apply the turning correction to the current driving speed.
+                moveRobotStrafe(driveSpeed, turnSpeed);
+
+                // Display drive status for the driver.
+                sendTelemetry(true);
+            }
+            if (correctionIN > 0) {
+                turnSpeed *= 1.0;
+
+                // Apply the turning correction to the current driving speed.
+                moveRobotStrafe(driveSpeed, turnSpeed);
+
+                // Display drive status for the driver.
+                sendTelemetry(true);
+            }
+        }
+        // Stop all motion & Turn off RUN_TO_POSITION
+        moveRobotStrafe(0, 0);
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+            // Calculate new targets based on input:
+
+
+
+            // Set the required driving speed  (must be positive for RUN_TO_POSITION)
+            // Start driving straight, and then enter the control loop
+            public void MoveLift(double targetHeight) {
+
+                double liftPower = 0.0;
+                while (sensorRange.getDistance(DistanceUnit.CM) < targetHeight - WIGGLE_ROOM)
+                {
+                    liftPower = RampUpLiftPower(liftPower);
+                    dualLift(liftPower);
+                }
+                liftPower = 0.0;
+                dualLift(liftPower);
+                while (sensorRange.getDistance(DistanceUnit.CM) > targetHeight + WIGGLE_ROOM)
+                {
+                    if(!sensorTouch.getState()){
+                        dualLift(0.0);
+                        break;
+                    }
+                    else  {
+                        liftPower = RampDownLiftPower(liftPower);
+                        dualLift(liftPower);
+                    }
+                }
+                liftPower = 0.0;
+                dualLift(liftPower);
+            }
+    public double RampUpLiftPower(double liftPower) {
+
+        if (liftPower < MAX_POWER)
+        {
+            return liftPower + LIFT_POWER_INCREMENT;
+        }
+        return liftPower;
+    }
+
+    public double RampDownLiftPower(double liftPower) {
+
+        if (liftPower > - MAX_POWER)
+        {
+            return liftPower - LIFT_POWER_INCREMENT;
+        }
+        return liftPower;
+    }
+    public void dualLift(double power) {
+
+        liftMotor1.setPower(power);
+        liftMotor2.setPower(power);
+    }
+
+    public double Increment(double Incremented_height){
+
+        if(Incremented_height + sensorRange.getDistance(DistanceUnit.CM) <= MAX_HEIGHT) {
+            return sensorRange.getDistance(DistanceUnit.CM) + Incremented_height;
+        }
+        return sensorRange.getDistance(DistanceUnit.CM);
+
+    }
+
+
+
     public void strafe(double maxDriveSpeed,
                        double distance,
                        double heading) {
@@ -414,19 +713,28 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
                     (leftFrontDrive.isBusy() && rightBackDrive.isBusy())) {
 
                 // Determine required steering to keep on heading
-               turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN_STRAFE);
+                turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN_STRAFE);
 
                 // if driving in reverse, the motor correction also needs to be reversed
-                if (distance < 0)
+                 if (distance < 0) {
                     turnSpeed *= -1.0;
 
-                // Apply the turning correction to the current driving speed.
-                moveRobotStrafe(driveSpeed, turnSpeed);
+                    // Apply the turning correction to the current driving speed.
+                    moveRobotStrafe(driveSpeed, turnSpeed);
 
-                // Display drive status for the driver.
-                sendTelemetry(true);
+                    // Display drive status for the driver.
+                    sendTelemetry(true);
+                }
+                if (distance > 0) {
+                    turnSpeed *= 1.0;
+
+                    // Apply the turning correction to the current driving speed.
+                    moveRobotStrafe(driveSpeed, turnSpeed);
+
+                    // Display drive status for the driver.
+                    sendTelemetry(true);
+                }
             }
-
             // Stop all motion & Turn off RUN_TO_POSITION
             moveRobotStrafe(0, 0);
             leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -454,6 +762,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
             leftFrontSpeed /= max;
             leftBackSpeed /= max;
             rightBackSpeed /= max;
+            rightFrontSpeed /= max;
         }
 
         leftFrontDrive.setPower(leftFrontSpeed);
@@ -497,7 +806,7 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
 
         // Stop all motion;
         moveRobot(0, 0);
-        moveRobotStrafe(0,0);
+
     }
 
     // **********  LOW Level driving functions.  ********************
@@ -513,14 +822,14 @@ public class MecanumAutoDriveByGyro extends LinearOpMode {
         targetHeading = desiredHeading;  // Save for telemetry
 
         // Get the robot heading by applying an offset to the IMU heading
-        robotHeading = getRawHeading() - headingOffset;
+        robotHeading = getRawHeading();
 
         // Determine the heading current error
         headingError = targetHeading - robotHeading;
 
         // Normalize the error to be within +/- 180 degrees
-        while (headingError > 180)  headingError -= 360;
-        while (headingError <= -180) headingError += 360;
+        while (headingError > 180.5)  headingError -= 360.5;
+        while (headingError <= -180.5) headingError += 360.5;
 
         // Multiply the error by the gain to determine the required steering correction/  Limit the result to +/- 1.0
         return Range.clip(headingError * proportionalGain, -1, 1);
