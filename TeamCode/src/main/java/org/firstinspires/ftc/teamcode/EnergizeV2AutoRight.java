@@ -132,6 +132,13 @@ public class EnergizeV2AutoRight extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit            = BNO055IMU.AngleUnit.DEGREES;
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+
+
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Cam1"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -145,7 +152,7 @@ public class EnergizeV2AutoRight extends LinearOpMode {
         rightServo = hardwareMap.get(Servo.class, "rightservo");
         rightServo.setPosition(1.0);
         leftServo = hardwareMap.get(Servo.class, "leftservo");
-        leftServo.setPosition(0.0);
+        gripper(open);
         Wait(5.0);
         gripper(close);
 
@@ -268,7 +275,7 @@ public class EnergizeV2AutoRight extends LinearOpMode {
 
         //close claw
         gripper(close);
-        holdHeading(.2, targetHeading, 1.0);
+
 
         driveStraight(.5, 3, targetHeading);
         holdHeading(.2, targetHeading, 1.0);
@@ -276,35 +283,41 @@ public class EnergizeV2AutoRight extends LinearOpMode {
         MoveLift(LOW_HEIGHT);
         holdHeading(.2, targetHeading, 1.0);
 
-        strafe(24, 3, targetHeading);
+        strafe(.5, -22, targetHeading);
         holdHeading(.2, targetHeading, 1.0);
 
         driveStraight(.5, 48, targetHeading);
         holdHeading(.2, targetHeading, 1.0);
 
-        strafe(.5, -12, targetHeading);
+        MoveLift(HIGH_HEIGHT);
+        holdHeading(.2, targetHeading, 1.0);
+
+
+        strafe(.5, 13.5, targetHeading);
         holdHeading(.2, targetHeading, 1.0);
 
         gripper(open);
         holdHeading(.2, targetHeading, 1.0);
 
         driveStraight(.5, -3, targetHeading);
+        holdHeading(.2, targetHeading, 1.0);
+
         /* Actually do something useful */
         if (tagOfInterest == null) {
-            strafe(.5, -24, targetHeading);
+            strafe(.5, -12, targetHeading);
             holdHeading(.2, targetHeading, 1.0);
             MoveLift(0.0);
         } else {
             if (tagOfInterest.id == 1) {
-                strafe(.5, -24, targetHeading);
-                holdHeading(.2, targetHeading, 1.0);
-                MoveLift(0.0);
-            } else if (tagOfInterest.id == 3) {
                 strafe(.5, -12, targetHeading);
                 holdHeading(.2, targetHeading, 1.0);
                 MoveLift(0.0);
-            } else if (tagOfInterest.id == 9) {
+            } else if (tagOfInterest.id == 3) {
                 strafe(.5, 12, targetHeading);
+                holdHeading(.2, targetHeading, 1.0);
+                MoveLift(0.0);
+            } else if (tagOfInterest.id == 9) {
+                strafe(.5, 36, targetHeading);
                 holdHeading(.2, targetHeading, 1.0);
                 MoveLift(0.0);
             }
@@ -458,7 +471,7 @@ public class EnergizeV2AutoRight extends LinearOpMode {
 
         // Stop all motion;
         moveRobot(0, 0);
-
+        Wait(.3);
     }
 
     // **********  LOW Level driving functions.  ********************
@@ -1042,6 +1055,15 @@ public class EnergizeV2AutoRight extends LinearOpMode {
         } else {
             rightServo.setPosition(0.0);
             leftServo.setPosition(1.0);
+        }
+    }
+    private void gripperNew(boolean toggle) {
+        if (toggle) {
+            rightServo.setPosition(0.0);
+            leftServo.setPosition(1.0);
+        } else {
+            rightServo.setPosition(1.0);
+            leftServo.setPosition(0.0);
         }
     }
 

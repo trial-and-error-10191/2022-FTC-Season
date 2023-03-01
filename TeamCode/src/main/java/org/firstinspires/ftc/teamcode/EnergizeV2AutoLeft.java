@@ -133,6 +133,12 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit            = BNO055IMU.AngleUnit.DEGREES;
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Cam1"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -300,13 +306,16 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         MoveLift(LOW_HEIGHT);
         holdHeading(.2,targetHeading,1.0);
 
-        strafe(-24,3,targetHeading);
+        strafe(.5,22,targetHeading);
         holdHeading(.2,targetHeading,1.0);
 
-        driveStraight(.5,48,targetHeading);
+        driveStraight(.5,55,targetHeading);
         holdHeading(.2,targetHeading,1.0);
 
-        strafe(.5,12,targetHeading);
+        MoveLift(HIGH_HEIGHT);
+        holdHeading(.2,targetHeading,1.0);
+
+        strafe(.5,-13.5,targetHeading);
         holdHeading(.2,targetHeading,1.0);
 
         gripper(open);
@@ -316,26 +325,26 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         /* Actually do something useful */
         if(tagOfInterest == null)
         {
-            strafe(.5,-12,targetHeading);
+            strafe(.5,-36,targetHeading);
             holdHeading(.2,targetHeading,1.0);
             MoveLift(0.0);
         }
         else
         {
             if (tagOfInterest.id == 1) {
-                strafe(.5,-12,targetHeading);
+                strafe(.5,-36,targetHeading);
                 holdHeading(.2,targetHeading,1.0);
                 MoveLift(0.0);
             }
 
             else if (tagOfInterest.id == 3) {
-                strafe(.5,12,targetHeading);
+                strafe(.5,-12,targetHeading);
                 holdHeading(.2,targetHeading,1.0);
                 MoveLift(0.0);
             }
 
             else if (tagOfInterest.id == 9) {
-              strafe(.5,24,targetHeading);
+              strafe(.5,12,targetHeading);
               holdHeading(.2,targetHeading,1.0);
               MoveLift(0.0);
             }
@@ -387,6 +396,7 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
             moveRobotStrafe(maxDriveSpeed, 0);
 
             // keep looping while we are still active, and BOTH motors are running.
+
             while (opModeIsActive() &&
                     (leftFrontDrive.isBusy() && rightBackDrive.isBusy())) {
 
@@ -413,6 +423,8 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
                     sendTelemetry(true);
                 }
             }
+
+
             // Stop all motion & Turn off RUN_TO_POSITION
             moveRobotStrafe(0, 0);
             leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -603,10 +615,10 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
             rightBackTarget = rightBackDrive.getCurrentPosition();
 
             // Calculate new targets based on input:
-            leftFrontTarget += (int) (distance * COUNTS_PER_INCH);
-            rightFrontTarget += (int) (distance * COUNTS_PER_INCH);
-            leftBackTarget += (int) (distance * COUNTS_PER_INCH);
-            rightBackTarget += (int) (distance * COUNTS_PER_INCH);
+            leftFrontTarget += (int) (distance * clicksPerInch);
+            rightFrontTarget += (int) (distance * clicksPerInch);
+            leftBackTarget += (int) (distance * clicksPerInch);
+            rightBackTarget += (int) (distance * clicksPerInch);
 
             // Set Target FIRST, then turn on RUN_TO_POSITION
             leftFrontDrive.setTargetPosition(leftFrontTarget);
@@ -624,6 +636,7 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
             moveRobot(maxDriveSpeed, 0);
 
             // keep looping while we are still active, and BOTH motors are running.
+
             while (opModeIsActive() &&
                     (leftFrontDrive.isBusy() && rightBackDrive.isBusy())) {
 
@@ -1076,7 +1089,15 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
             leftServo.setPosition(1.0);
         }
     }
-
+    private void gripperNew(boolean toggle) {
+        if (toggle) {
+            rightServo.setPosition(0.0);
+            leftServo.setPosition(1.0);
+        } else {
+            rightServo.setPosition(1.0);
+            leftServo.setPosition(0.0);
+        }
+    }
     private void turnClockwise(int whatAngle, double speed) {
         // "whatAngle" is in degrees. A negative whatAngle turns counterclockwise.
 
