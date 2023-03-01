@@ -2,6 +2,14 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 // This file is a subsystem file for the drivetrain.
 public class DriveTrain {
@@ -12,6 +20,22 @@ public class DriveTrain {
     // Double variables:
     double maxDrivePower = 0.75;
     double precisionModeThrottle = 2;
+
+    double increment = 0.05;
+    ElapsedTime waitTimeToggle = new ElapsedTime();
+    static final double     COUNTS_PER_MOTOR_REV    = 537.7;    // eg: TETRIX Motor Encoder
+    static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
+    static final double     WHEEL_DIAMETER_INCHES   = 3.78 ;     // For figuring circumference
+    static final double     clicksPerInch         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+            (WHEEL_DIAMETER_INCHES * 3.1415);
+    private double fast = 0.6; // Fast speed
+    private double medium = 0.3; // Medium speed
+    private double slow = 0.1; // Slow speed
+    private double clicksPerDeg = clicksPerInch / 4.99; // empirically measured
+
+    private int lfPos, rfPos, lrPos, rrPos;
+
+    private BNO055IMU       imu         = null;
 
     public DriveTrain(HardwareMap hwMap) {
         // Initializes motor names:
@@ -95,4 +119,15 @@ public class DriveTrain {
         }
 
     }
+
+    public void precision(boolean input) {
+        if (input) {
+            if (input && waitTimeToggle.time() > .75) {
+                precisionModeThrottle += increment;
+                waitTimeToggle.reset();
+            }
+        }
+    }
+
+
 }

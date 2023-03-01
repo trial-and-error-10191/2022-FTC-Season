@@ -29,6 +29,8 @@ public class EnergizeTeleOp extends LinearOpMode {
             // This controls the LED:
             bessie.led.teleLED(gamepad1.x);
 
+            bessie.driveTrain.precision(gamepad1.dpad_up);
+
             telemetry.addData("Front Driving Motors | Left, Right", "%4.2f, %4.2f",
                     bessie.driveTrain.leftFrontDrive.getPower(),
                     bessie.driveTrain.rightFrontDrive.getPower());
@@ -44,6 +46,8 @@ public class EnergizeTeleOp extends LinearOpMode {
                     String.valueOf(bessie.lift.sensorTouch.getState()));
             telemetry.addData("Precision Mode Toggle",
                     String.valueOf(bessie.led.toggle));
+            telemetry.addData("Precision Mode Increment",
+                    bessie.driveTrain.increment);
             telemetry.update();
         }
     }

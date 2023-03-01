@@ -39,4 +39,24 @@ public class LED {
             waitTimeToggle.reset();
         }
     }
+
+    public void autoLED (int colorNum) {
+        // Numbers 1-3 have a specific color.
+        
+        if (colorNum == 1) {
+            redLED.setState(true);
+            greenLED.setState(false);
+        }
+
+        else if (colorNum == 2) {
+            redLED.setState(false);
+            greenLED.setState(true);
+        }
+
+        else if (colorNum == 3) {
+            redLED.setState(false);
+            greenLED.setState(false);
+        }
+
+    }
 }
