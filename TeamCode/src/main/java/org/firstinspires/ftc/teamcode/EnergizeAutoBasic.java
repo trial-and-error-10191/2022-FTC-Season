@@ -36,7 +36,14 @@ public class EnergizeAutoBasic extends LinearOpMode {
     int ID_TAG_OF_INTEREST3 = 9; // Tag ID 9 from the 36h11 family
     AprilTagDetection tagOfInterest = null;
 
+    private double fast = 0.6; // Fast speed
+    private double medium = 0.3; // Medium speed
+    private double slow = 0.1; // Slow speed
 
+    int min = 1; // Minimum value of range
+    int max = 3; // Maximum value of range
+    // Print the min and max
+    int random_int = (int) Math.floor(Math.random() * (max - min + 1) + min);
 
 
     @Override
@@ -165,23 +172,69 @@ public class EnergizeAutoBasic extends LinearOpMode {
         /* Actually do something useful */
         if(tagOfInterest == null)
         {
-            /*
-             * Insert your autonomous code here, presumably running some default configuration
-             * since the tag was never sighted during INIT
-             */
+            // Just in case the camera does not see a tag, an integer will be randomized:
+            if (random_int == 1) {
+                // This is here to fix positioning:
+                bessie.driveTrain.strafe(3, fast);
+                bessie.driveTrain.wait(0.5);
+
+                // This parks:
+                bessie.driveTrain.strafe(-24, fast);
+                bessie.driveTrain.wait(0.5);
+                bessie.driveTrain.moveForward(24, medium);
+            }
+
+            else if (random_int == 2) {
+                // This is here to fix positioning:
+                bessie.driveTrain.strafe(3, fast);
+                bessie.driveTrain.wait(0.5);
+
+                // This parks:
+                bessie.driveTrain.moveForward(24, medium);
+            }
+
+            else if (random_int == 3) {
+                // This is here to fix positioning:
+                bessie.driveTrain.strafe(3, fast);
+                bessie.driveTrain.wait(0.5);
+
+                // This parks:
+                bessie.driveTrain.strafe(24, fast);
+                bessie.driveTrain.wait(0.5);
+                bessie.driveTrain.moveForward(24, medium);
+            }
         }
         else
         {
             if (tagOfInterest.id == 1) {
+                // This is here to fix positioning:
+                bessie.driveTrain.strafe(3, fast);
+                bessie.driveTrain.wait(0.5);
 
+                // This parks:
+                bessie.driveTrain.strafe(-24, fast);
+                bessie.driveTrain.wait(0.5);
+                bessie.driveTrain.moveForward(24, medium);
             }
 
             else if (tagOfInterest.id == 3) {
+                // This is here to fix positioning:
+                bessie.driveTrain.strafe(3, fast);
+                bessie.driveTrain.wait(0.5);
 
+                // This parks:
+                bessie.driveTrain.moveForward(24, medium);
             }
 
             else if (tagOfInterest.id == 9) {
+                // This is here to fix positioning:
+                bessie.driveTrain.strafe(3, fast);
+                bessie.driveTrain.wait(0.5);
 
+                // This parks:
+                bessie.driveTrain.strafe(24, fast);
+                bessie.driveTrain.wait(0.5);
+                bessie.driveTrain.moveForward(24, medium);
             }
 
         }
