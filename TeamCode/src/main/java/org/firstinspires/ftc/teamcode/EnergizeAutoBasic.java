@@ -11,7 +11,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
 
-@Autonomous(name="Energize Auto", group="Linear Opmode")
+@Autonomous(name="Energize Auto Basic", group="Linear Opmode")
 //@Disabled
 public class EnergizeAutoBasic extends LinearOpMode {
     OpenCvCamera camera;
