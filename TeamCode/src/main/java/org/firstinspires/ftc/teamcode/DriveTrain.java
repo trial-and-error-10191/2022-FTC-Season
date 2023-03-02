@@ -18,9 +18,7 @@ public class DriveTrain {
     DcMotor leftFrontDrive, leftBackDrive, rightFrontDrive, rightBackDrive;
 
     // Double variables:
-    double maxDrivePower = 0.75;
     double precisionModeThrottle = 2;
-
     double increment = 0.05;
     ElapsedTime waitTimeToggle = new ElapsedTime();
     static final double     COUNTS_PER_MOTOR_REV    = 537.7;    // eg: TETRIX Motor Encoder
@@ -28,6 +26,7 @@ public class DriveTrain {
     static final double     WHEEL_DIAMETER_INCHES   = 3.78 ;     // For figuring circumference
     static final double     clicksPerInch         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
+
     private double fast = 0.6; // Fast speed
     private double medium = 0.3; // Medium speed
     private double slow = 0.1; // Slow speed
@@ -77,31 +76,6 @@ public class DriveTrain {
             rightFrontPower /= max;
             leftBackPower /= max;
             rightBackPower /= max;
-        }
-
-        if (leftFrontPower > maxDrivePower) {
-            leftFrontPower = maxDrivePower;
-        }
-        if (leftBackPower > maxDrivePower) {
-            leftBackPower = maxDrivePower;
-        }
-        if (rightFrontPower > maxDrivePower) {
-            rightFrontPower = maxDrivePower;
-        }
-        if (rightBackPower > maxDrivePower) {
-            rightBackPower = maxDrivePower;
-        }
-        if (leftFrontPower < - maxDrivePower) {
-            leftFrontPower = - maxDrivePower;
-        }
-        if (leftBackPower < - maxDrivePower) {
-            leftBackPower = - maxDrivePower;
-        }
-        if (rightFrontPower < - maxDrivePower) {
-            rightFrontPower = - maxDrivePower;
-        }
-        if (rightBackPower < - maxDrivePower) {
-            rightBackPower = - maxDrivePower;
         }
 
         // This is the code for the precision mode:

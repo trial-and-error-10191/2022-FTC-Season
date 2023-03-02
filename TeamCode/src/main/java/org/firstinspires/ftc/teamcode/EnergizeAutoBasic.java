@@ -85,7 +85,7 @@ public class EnergizeAutoBasic extends LinearOpMode {
 
                 for(AprilTagDetection tag : currentDetections)
                 {
-                    if(tag.id == ID_TAG_OF_INTEREST1 || tag.id == ID_TAG_OF_INTEREST2 ||tag.id == ID_TAG_OF_INTEREST3)
+                    if(tag.id == ID_TAG_OF_INTEREST1 || tag.id == ID_TAG_OF_INTEREST2 || tag.id == ID_TAG_OF_INTEREST3)
                     {
                         tagOfInterest = tag;
                         tagFound = true;
