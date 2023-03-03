@@ -106,9 +106,9 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
         rightServo = hardwareMap.get(Servo.class,"rightservo");
-        rightServo.setPosition(1.0);
         leftServo = hardwareMap.get(Servo.class,"leftservo");
-        leftServo.setPosition(0.0);
+
+       gripper(open);
         Wait(5.0);
         gripper(close);
 
@@ -131,8 +131,8 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        liftMotor1.setDirection(DcMotor.Direction.REVERSE);
-        liftMotor2.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor1.setDirection(DcMotor.Direction.FORWARD);
+        liftMotor2.setDirection(DcMotor.Direction.FORWARD);
 
         MoveLift(0.0);
         camera.setPipeline(aprilTagDetectionPipeline);
@@ -256,20 +256,20 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         gripper(close);
         Wait(0.5);
 
-        moveForward(3,medium);
-        Wait(.5);
+        moveForward(2,medium);
+        Wait(0.5);
 
         MoveLift(LOW_HEIGHT);
-        Wait(1.0);
+        Wait(0.5);
 
-        strafe(14,medium);
-        Wait(1.0);
+        strafe(19,medium);
+        Wait(0.5);
 
-        moveForward(3,slow);
-        Wait(1.0);
+        moveForward(2,slow);
+        Wait(0.5);
 
         gripper(open);
-        Wait(1.0);
+        Wait(0.5);
         moveForward(-3,medium);
         /* Actually do something useful */
         if(tagOfInterest == null)
@@ -287,7 +287,7 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
             }
 
             else if (tagOfInterest.id == 3) {
-                strafe(-12,medium);
+                strafe(-14,medium);
                 Wait(.5);
                 moveForward(24,medium);
             }
@@ -722,12 +722,12 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
 
     private void gripper(boolean toggle){
         if (toggle) {
-            rightServo.setPosition(1.0);
-            leftServo.setPosition(0.0);
-        }
-        else {
             rightServo.setPosition(0.0);
             leftServo.setPosition(1.0);
+        }
+        else {
+            rightServo.setPosition(1.0);
+            leftServo.setPosition(0.0);
         }
     }
 

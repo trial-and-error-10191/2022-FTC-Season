@@ -250,17 +250,18 @@ public class EnergizeV2Auto_Basic extends LinearOpMode {
         else
         {
             if (tagOfInterest.id == 1) {
-                strafe(-24, fast);
+                strafe(-22, fast);
                 Wait(0.5);
                 moveWholeBlock("forward", medium);
             }
 
             else if (tagOfInterest.id == 3) {
+                strafe(5, medium);
                 moveWholeBlock("forward", medium);
             }
 
             else if (tagOfInterest.id == 9) {
-                strafe(24, fast);
+                strafe(30, fast);
                 Wait(0.5);
                 moveWholeBlock("forward", medium);
             }

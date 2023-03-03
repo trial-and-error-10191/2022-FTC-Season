@@ -107,9 +107,9 @@ import java.util.ArrayList;
             rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
             rightServo = hardwareMap.get(Servo.class,"rightservo");
-            rightServo.setPosition(1.0);
             leftServo = hardwareMap.get(Servo.class,"leftservo");
-            leftServo.setPosition(0.0);
+
+            gripper(open);
             Wait(5.0);
             gripper(close);
 
@@ -133,8 +133,8 @@ import java.util.ArrayList;
             rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
             rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
-            liftMotor1.setDirection(DcMotor.Direction.REVERSE);
-            liftMotor2.setDirection(DcMotor.Direction.REVERSE);
+            liftMotor1.setDirection(DcMotor.Direction.FORWARD);
+            liftMotor2.setDirection(DcMotor.Direction.FORWARD);
 
             MoveLift(0.0);
             camera.setPipeline(aprilTagDetectionPipeline);
@@ -295,7 +295,7 @@ import java.util.ArrayList;
                 }
 
                 else if (tagOfInterest.id == 9) {
-                    strafe(38,medium);
+                    strafe(36,medium);
                     Wait(.5);
                     moveForward(24,medium);
                 }
@@ -724,12 +724,12 @@ import java.util.ArrayList;
 
         private void gripper(boolean toggle){
             if (toggle) {
-                rightServo.setPosition(1.0);
-                leftServo.setPosition(0.0);
-            }
-            else {
                 rightServo.setPosition(0.0);
                 leftServo.setPosition(1.0);
+            }
+            else {
+                rightServo.setPosition(1.0);
+                leftServo.setPosition(0.0);
             }
         }
 
