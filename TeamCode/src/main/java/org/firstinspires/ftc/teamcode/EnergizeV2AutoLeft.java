@@ -4,6 +4,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -150,11 +151,10 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
         rightServo = hardwareMap.get(Servo.class,"rightservo");
-        rightServo.setPosition(1.0);
         leftServo = hardwareMap.get(Servo.class,"leftservo");
-        leftServo.setPosition(0.0);
+        gripperNew(open);
         Wait(5.0);
-        gripper(close);
+        gripperNew(close);
 
         sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
 
@@ -175,8 +175,8 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        liftMotor1.setDirection(DcMotor.Direction.REVERSE);
-        liftMotor2.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor1.setDirection(DcMotor.Direction.FORWARD);
+        liftMotor2.setDirection(DcMotor.Direction.FORWARD);
 
         MoveLift(0.0);
         camera.setPipeline(aprilTagDetectionPipeline);
@@ -297,7 +297,7 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         //
 
         //close claw
-        gripper(close);
+        gripperNew(close);
         holdHeading(.2,targetHeading,1.0);
 
         driveStraight(.5,3,targetHeading);
@@ -306,10 +306,10 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         MoveLift(LOW_HEIGHT);
         holdHeading(.2,targetHeading,1.0);
 
-        strafe(.5,22,targetHeading);
+        strafe(.5,26,targetHeading);
         holdHeading(.2,targetHeading,1.0);
 
-        driveStraight(.5,55,targetHeading);
+        driveStraight(.5,48,targetHeading);
         holdHeading(.2,targetHeading,1.0);
 
         MoveLift(HIGH_HEIGHT);
@@ -318,7 +318,7 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
         strafe(.5,-13.5,targetHeading);
         holdHeading(.2,targetHeading,1.0);
 
-        gripper(open);
+        gripperNew(open);
         holdHeading(.2,targetHeading,1.0);
 
         driveStraight(.5,-3,targetHeading);
@@ -624,7 +624,7 @@ public class EnergizeV2AutoLeft extends LinearOpMode {
             leftFrontDrive.setTargetPosition(leftFrontTarget);
             leftBackDrive.setTargetPosition(leftBackTarget);
             rightFrontDrive.setTargetPosition(rightFrontTarget);
-            rightBackDrive.setTargetPosition(rightFrontTarget);
+            rightBackDrive.setTargetPosition(rightBackTarget);
 
             leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
