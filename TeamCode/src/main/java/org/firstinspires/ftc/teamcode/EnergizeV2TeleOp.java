@@ -45,7 +45,7 @@ public class EnergizeV2TeleOp extends LinearOpMode {
     private final double LIFT_POWER_INCREMENT = 0.05;
     // when moving to a target height with the lift, this is how much flexibility the lift has
     // in reaching the target height [cm]
-    private final double WIGGLE_ROOM = 1.5;
+    private final double WIGGLE_ROOM = 2.5;
 
     // target heights [cm]
     private final double LOW_HEIGHT = 36.0;
