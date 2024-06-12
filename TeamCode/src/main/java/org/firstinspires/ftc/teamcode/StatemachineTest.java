@@ -1,78 +1,30 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.ams.AMSColorSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.openftc.apriltag.AprilTagDetection;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-import java.util.ArrayList;
+@Autonomous(name="FSM Example2")
+public class StatemachineTest extends OpMode {
 
-@Autonomous(name="Energize V2 Auto", group="Linear Opmode")
-//@Disabled
-public class EnergizeV2Auto_Basic extends LinearOpMode {
-    OpenCvCamera camera;
-    AprilTagDetectionPipeline aprilTagDetectionPipeline;
-
-    static final double FEET_PER_METER = 3.28084;
-
-    // Lens intrinsics.
-    // UNITS ARE PIXELS.
-    // NOTE: this calibration is for the C920 webcam at 800x448.
-    // You will need to do your own calibration for other configurations!
-    double fx = 578.272;
-    double fy = 578.272;
-    double cx = 402.145;
-    double cy = 221.506;
-
-    // UNITS ARE METERS
-    double tagsize = 0.166;
-
-
-    int ID_TAG_OF_INTEREST1 = 1; // Tag ID 1 from the 36h11 family
-    int ID_TAG_OF_INTEREST2 = 3; // Tag ID 3 from the 36h11 family
-    int ID_TAG_OF_INTEREST3 = 9; // Tag ID 9 from the 36h11 family
-    AprilTagDetection tagOfInterest = null;
-
-
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftFrontDrive = null;
-    private DcMotor leftBackDrive = null;
-    private DcMotor rightFrontDrive = null;
-    private DcMotor rightBackDrive = null;
-
-    private DistanceSensor sensorRange;
-    private DigitalChannel sensorTouch;
-
-
-    private DcMotor liftMotor1 = null;
-    private DcMotor liftMotor2 = null;
-
-    private Servo rightServo;
-    private Servo leftServo;
-
-    private DigitalChannel redLED;
-    private DigitalChannel greenLED;
-
-    // Drive motor position variables:
     private int lfPos;
     private int rfPos;
     private int lrPos;
     private int rrPos;
 
-    static final double     COUNTS_PER_MOTOR_REV    = 537.7;    // eg: TETRIX Motor Encoder
-    static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
-    static final double     WHEEL_DIAMETER_INCHES   = 3.78 ;     // For figuring circumference
-    static final double     clicksPerInch         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+    static final double COUNTS_PER_MOTOR_REV = 537.7;    // eg: TETRIX Motor Encoder
+    static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
+    static final double WHEEL_DIAMETER_INCHES = 3.78;     // For figuring circumference
+    static final double clicksPerInch = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
     private double fast = 0.6; // Fast speed
     private double medium = 0.3; // Medium speed
@@ -87,203 +39,227 @@ public class EnergizeV2Auto_Basic extends LinearOpMode {
     private final double WIGGLE_ROOM = 1.5;
 
     // target heights [cm]
-    private final double LOW_HEIGHT = 36.0;
-    private final double MED_HEIGHT = 60.0;
+    private final double LOW_HEIGHT = 41.0;
+    private final double MED_HEIGHT = 65.0;
     private final double HIGH_HEIGHT = 86.4;
 
     private boolean open = true;
     private boolean close = false;
 
-    @Override
-    public void runOpMode() {
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Cam1"), cameraMonitorViewId);
-        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+    double fx = 578.272;
+    double fy = 578.272;
+    double cx = 402.145;
+    double cy = 221.506;
 
-        // Corresponds Drive
-        leftFrontDrive  = hardwareMap.get(DcMotor.class, "leftFront");
-        leftBackDrive  = hardwareMap.get(DcMotor.class, "leftBack");
+    private DcMotor liftmotor;
+    private DcMotor liftMotor1 = null;
+    private DcMotor liftMotor2 = null;
+    private Servo claw;
+    Servo rightServo;
+    Servo leftServo;
+    double servoPosition = 0.0;
+    private DcMotor leftFrontDrive = null;
+    private DcMotor leftBackDrive = null;
+    private DcMotor rightFrontDrive = null;
+    private DcMotor rightBackDrive = null;
+
+    private DistanceSensor sensorRange;
+    private DigitalChannel sensorTouch;
+    private  DigitalChannel limitSwitch = null;
+
+
+    private ElapsedTime runtime = new ElapsedTime();
+
+    final double DUMP_IDLE = -0.5;
+    final double DUMP_DEPOSIT = 0.7;
+    final double DUMP_TIME = .5;
+    final int LIFT_LOW = 0;
+    final int LIFT_HIGH = 100;
+    double liftPower = 0.0;
+    double targetheight = 0.0;
+
+    public enum LiftState {
+        START,
+        LIFTING,
+        LIFT_STOP,
+        LIFT_SET_LOW,
+        LIFTING_LOW,
+
+        WAIT_LIFT,
+        WAIT,
+
+    }
+
+    public enum Drivestate {
+        FORWARD,
+        WAIT_DRIVE
+    }
+
+    LiftState liftState = LiftState.START;
+    Drivestate drivestate = Drivestate.FORWARD;
+
+
+    public void init() {
+        runtime.reset();
+        liftMotor1 = hardwareMap.get(DcMotor.class, "LiftMotor1");
+        liftMotor2 = hardwareMap.get(DcMotor.class, "LiftMotor2");
+        liftMotor1.setDirection(DcMotor.Direction.REVERSE);
+        liftMotor2.setDirection(DcMotor.Direction.REVERSE);
+
+
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "leftFront");
+        leftBackDrive = hardwareMap.get(DcMotor.class, "leftBack");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFront");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack");
 
-        rightServo = hardwareMap.get(Servo.class,"rightservo");
-        rightServo.setPosition(0.1);
-        leftServo = hardwareMap.get(Servo.class,"leftservo");
-        leftServo.setPosition(0.9);
+        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+
 
         sensorRange = hardwareMap.get(DistanceSensor.class, "sensor_range");
 
         sensorTouch = hardwareMap.get(DigitalChannel.class, "sensor_touch");
         sensorTouch.setMode(DigitalChannel.Mode.INPUT);
 
-        redLED = hardwareMap.get(DigitalChannel.class, "redLED");
-        greenLED = hardwareMap.get(DigitalChannel.class, "greenLED");
-        
-        redLED.setMode(DigitalChannel.Mode.OUTPUT);
-        greenLED.setMode(DigitalChannel.Mode.OUTPUT);
-        // Initializes Drive directions.
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-
-        camera.setPipeline(aprilTagDetectionPipeline);
-        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
-            @Override
-            public void onOpened()
-            {
-                camera.startStreaming(800,448, OpenCvCameraRotation.UPRIGHT);
-            }
-
-            @Override
-            public void onError(int errorCode)
-            {
-
-            }
-        });
-
-        telemetry.setMsTransmissionInterval(50);
-
-        /*
-         * The INIT-loop:
-         * This REPLACES waitForStart!
-         */
-        sleep(3000);
-        while (!isStarted() && !isStopRequested())
-        {
-            ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
-
-            if(currentDetections.size() != 0)
-            {
-                boolean tagFound = false;
-
-                for(AprilTagDetection tag : currentDetections)
-                {
-                    if(tag.id == ID_TAG_OF_INTEREST1 || tag.id == ID_TAG_OF_INTEREST2 ||tag.id == ID_TAG_OF_INTEREST3)
-                    {
-                        tagOfInterest = tag;
-                        tagFound = true;
-                        break;
-                    }
-                }
-
-                if(tagFound)
-                {
-                    telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
-                    if (tagOfInterest.id == 1) {
-                        redLED.setState(true);
-                        greenLED.setState(false);
-                    }
-                    else if (tagOfInterest.id == 3){
-                        redLED.setState(false);
-                        greenLED.setState(true);
-                    }
-                    else if (tagOfInterest.id == 9){
-                        redLED.setState(false);
-                        greenLED.setState(false);
-                    }
-                    tagToTelemetry(tagOfInterest);
-                }
-
-                else {
-                    telemetry.addLine("Don't see tag of interest :(");
-                    redLED.setState(true);
-                    greenLED.setState(true);
-                    if(tagOfInterest == null)
-                    {
-                        telemetry.addLine("(The tag has never been seen)");
-                    }
-                    else
-                    {
-                        telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
-                        tagToTelemetry(tagOfInterest);
-                    }
-                }
-
-            }
-            else
-            {
-                telemetry.addLine("Don't see tag of interest :(");
-
-                if(tagOfInterest == null)
-                {
-                    telemetry.addLine("(The tag has never been seen)");
-                }
-                else
-                {
-                    telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
-                    tagToTelemetry(tagOfInterest);
-                }
-
-            }
-
-            telemetry.update();
-            sleep(20);
-        }
-
-        /*
-         * The START command just came in: now work off the latest snapshot acquired
-         * during the init loop.
-         */
-
-        /* Update the telemetry */
-        if(tagOfInterest != null)
-        {
-            telemetry.addLine("Tag snapshot:\n");
-            tagToTelemetry(tagOfInterest);
-            telemetry.update();
-        }
-        else
-        {
-            telemetry.addLine("No tag snapshot available, it was never sighted during the init loop :(");
-            telemetry.update();
-        }
-
-        /* Actually do something useful */
-        if(tagOfInterest == null)
-        {
-            /*
-             * Insert your autonomous code here, presumably running some default configuration
-             * since the tag was never sighted during INIT
-             */
-        }
-        else
-        {
-            if (tagOfInterest.id == 1) {
-                strafe(-22, fast);
-                Wait(0.5);
-                moveWholeBlock("forward", medium);
-            }
-
-            else if (tagOfInterest.id == 3) {
-                strafe(5, medium);
-                moveWholeBlock("forward", medium);
-            }
-
-            else if (tagOfInterest.id == 9) {
-                strafe(30, fast);
-                Wait(0.5);
-                moveWholeBlock("forward", medium);
-            }
-
-        }
+        limitSwitch = hardwareMap.get(DigitalChannel.class, "limitSwitch");
 
 
-        /* You wouldn't have this in your autonomous, this is just to prevent the sample from ending */
-       while (opModeIsActive()) {sleep(20);}
     }
 
-    void tagToTelemetry(AprilTagDetection detection)
-    {
-        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
-        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x*FEET_PER_METER));
-        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y*FEET_PER_METER));
-        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z*FEET_PER_METER));
-        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", Math.toDegrees(detection.pose.yaw)));
-        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
-        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
+    public void loop() {
+       /* switch (drivestate) {
+            case FORWARD:
+                moveForward(24,medium);
+                drivestate = drivestate.WAIT_DRIVE;
+        }
+        break;
+        case
+            }*/
+
+
+
+       /* switch (drivestate) {
+            case FORWARD:
+            moveForward(24,medium);
+            break;}*/
+        //set target to med
+        targetheight=MED_HEIGHT;
+        switch (liftState){
+            case START:
+
+                    liftState = liftState.LIFTING;
+
+                break;
+            case LIFTING:
+                //Move lift to target position
+                MoveLift(targetheight);
+                //One lift reaches target height, change state to LIFT_STOP
+                if (sensorRange.getDistance(DistanceUnit.CM) >= targetheight- WIGGLE_ROOM) {
+                    liftState = liftState.LIFT_SET_LOW;
+                    Wait(5.0);
+
+                }
+                break;
+            case LIFT_SET_LOW:
+               targetheight=LOW_HEIGHT;
+               liftState=liftState.LIFTING_LOW;
+               break;
+            case LIFTING_LOW:
+                MoveLift(targetheight);
+                if(sensorRange.getDistance(DistanceUnit.CM) >= targetheight- WIGGLE_ROOM) {
+                    liftState = liftState.LIFT_STOP;
+                }
+                break;
+            case LIFT_STOP:
+                dualLift(0.0);
+                break;
+
+
+        }
+        //moveForward(24, medium);
+
+
+        telemetry.addData("Lift Motors", "%5.2f", liftPower);
+        telemetry.addData("Set Height","%5.2f", targetheight);
+        telemetry.addData("Current State", liftState.toString());
+        telemetry.addData("Current State",liftState.name());
+        telemetry.addData("Current Height","%5.2f", sensorRange.getDistance(DistanceUnit.CM));
+        telemetry.update();
+
+
+
+
     }
+
+
+
+    public void dualPosition(int position) {
+
+        liftMotor1.setTargetPosition(position);
+        liftMotor2.setTargetPosition(position);
+    }
+
+    public void dualPower(int Power) {
+
+        liftMotor1.setPower(Power);
+        liftMotor2.setPower(Power);
+    }
+
+    public void dualRun(int Run) {
+
+        liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    public void MoveLift(double targetHeight) {
+
+
+        if (sensorRange.getDistance(DistanceUnit.CM) < targetHeight - WIGGLE_ROOM) {
+
+            liftPower = RampUpLiftPower(liftPower);
+            dualLift(liftPower);}
+
+        else if (sensorRange.getDistance(DistanceUnit.CM) > targetHeight + WIGGLE_ROOM ){
+            liftPower = RampDownLiftPower(liftPower);
+            dualLift(liftPower);}
+       /* else if (!limitSwitch.getState() && liftMotor1.getPower() > 0 ); {
+            dualLift(0.0);
+        }*/
+         else {
+            liftPower = 0.0;
+            dualLift(liftPower);
+
+        }
+
+
+    }
+
+
+
+    public double RampUpLiftPower(double liftPower) {
+
+        if (liftPower < MAX_POWER) {
+            return liftPower + LIFT_POWER_INCREMENT;
+        }
+        return liftPower;
+    }
+
+    public double RampDownLiftPower(double liftPower) {
+
+        if (liftPower > -MAX_POWER) {
+            return liftPower - LIFT_POWER_INCREMENT;
+        }
+        return liftPower;
+    }
+
+    public void dualLift(double power) {
+
+        liftMotor1.setPower(power);
+        liftMotor2.setPower(power);
+    }
+
 
     private void moveForward(int howMuch, double speed) {
         // "howMuch" is in inches. A negative howMuch moves backward.
@@ -322,8 +298,6 @@ public class EnergizeV2Auto_Basic extends LinearOpMode {
                 leftBackDrive.isBusy() && rightBackDrive.isBusy()) {
 
             // Display info for the driver:
-
-            if ()
             telemetry.addLine("Move Forward");
             telemetry.addData("Target", "%7d :%7d :%7d :%7d", lfPos, rfPos, lrPos, rrPos);
             telemetry.addData("Actual", "%7d :%7d :%7d :%7d", leftFrontDrive.getCurrentPosition(),
@@ -339,7 +313,6 @@ public class EnergizeV2Auto_Basic extends LinearOpMode {
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
-
     private void strafe(int howMuch, double speed) {
         // "howMuch" is in inches. A negative howMuch moves backward.
 
@@ -637,12 +610,12 @@ public class EnergizeV2Auto_Basic extends LinearOpMode {
 
     private void gripper(boolean toggle){
         if (toggle) {
-            rightServo.setPosition(0.1);
-            leftServo.setPosition(0.9);
+            rightServo.setPosition(1.0);
+            leftServo.setPosition(0.0);
         }
         else {
-            rightServo.setPosition(0.97);
-            leftServo.setPosition(0.03);
+            rightServo.setPosition(0.0);
+            leftServo.setPosition(1.0);
         }
     }
 
@@ -690,28 +663,11 @@ public class EnergizeV2Auto_Basic extends LinearOpMode {
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
-
-    private void moveLift(int position) {
-        if (position == 0) {
-
-        }
-        else if (position == 1) {
-
-        }
-        else if (position == 2) {
-
-        }
-        else if (position == 3) {
-
-        }
-    }
-
     private void Wait(double seconds) {
         runtime.reset();
         while (runtime.time() < seconds) {
 
         }
     }
-
-
 }
+
